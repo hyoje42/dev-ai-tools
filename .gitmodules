@@ -1,0 +1,6 @@
+[submodule "claude-config"]
+	path = claude-config
+	url = ../claude-config.git
+[submodule "codex-config"]
+	path = codex-config
+	url = ../codex-config.git
