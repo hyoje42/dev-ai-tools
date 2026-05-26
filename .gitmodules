@@ -1,0 +1,6 @@
+[submodule "claude-config"]
+	path = claude-config
+	url = git@github.ecodesamsung.com:hyoje-lee/claude-config.git
+[submodule "codex-config"]
+	path = codex-config
+	url = git@github.ecodesamsung.com:hyoje-lee/codex-config.git
