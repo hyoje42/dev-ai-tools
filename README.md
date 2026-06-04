@@ -8,12 +8,27 @@
 
 ```
 dev-ai-tools/
-├── claude-config/   # Claude Code 설정 (submodule)
-└── codex-config/    # Codex 설정 (submodule)
+├── claude-config/        # Claude Code 설정 (submodule)
+│   ├── CLAUDE.md         # repo 관리용 meta 문서 (sync 대상 X)
+│   ├── claude-sync-to-home / claude-diff-with-home
+│   └── home/             # 이 폴더가 ~/.claude/로 sync
+│       ├── rules/
+│       ├── skills/
+│       └── settings.json
+└── codex-config/         # Codex 설정 (submodule)
+    ├── AGENTS.md         # agent용 meta 문서 (sync 대상 X)
+    ├── README.md         # 사람용 개요 (sync 대상 X)
+    ├── codex-sync-to-home / codex-diff-with-home
+    └── home/             # 이 폴더가 ~/.codex/로 sync
+        ├── AGENTS.md     # Codex 전역 지시문 (~/.codex/AGENTS.md로 sync)
+        ├── rules/dev-tools/
+        └── skills/
 ```
 
-- **[claude-config/](./claude-config)** — Claude Code의 rules, skills, settings.json을 관리하고 `~/.claude/`로 동기화. 자세한 내용은 [claude-config/CLAUDE.md](./claude-config/CLAUDE.md) 참고.
-- **[codex-config/](./codex-config)** — Codex의 AGENTS.md, rules, skills를 관리하고 `~/.codex/`로 동기화. 자세한 내용은 [codex-config/README.md](./codex-config/README.md) 참고.
+각 submodule의 공통 규칙: **`home/` 하위 구조는 `~/.<tool>/`을 그대로 미러링**한다. 루트의 다른 파일(meta 문서, sync 스크립트, `_backup/` 등)은 sync 대상이 아니다.
+
+- **[claude-config/](./claude-config)** — `home/` 내용을 `~/.claude/`로 동기화. 자세한 내용은 [claude-config/CLAUDE.md](./claude-config/CLAUDE.md) 참고.
+- **[codex-config/](./codex-config)** — `home/` 내용을 `~/.codex/`로 동기화. 자세한 내용은 [codex-config/README.md](./codex-config/README.md) 참고.
 
 ## 클론 및 초기화
 
@@ -37,7 +52,7 @@ git submodule update --init --recursive
 
 ```bash
 cd claude-config
-# rules/, skills/, settings.json 수정
+# home/rules/, home/skills/, home/settings.json 수정
 ./claude-diff-with-home    # ~/.claude/와 차이 확인
 ./claude-sync-to-home      # ~/.claude/에 반영
 git add -A && git commit   # 변경 이력 커밋
@@ -47,7 +62,7 @@ git add -A && git commit   # 변경 이력 커밋
 
 ```bash
 cd codex-config
-# AGENTS.md, rules/, skills/ 수정
+# home/AGENTS.md, home/rules/dev-tools/, home/skills/ 수정
 ./codex-diff-with-home     # ~/.codex/와 차이 확인
 ./codex-sync-to-home       # ~/.codex/에 반영
 git add -A && git commit   # 변경 이력 커밋
