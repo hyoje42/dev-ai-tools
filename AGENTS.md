@@ -25,6 +25,13 @@
 
 각 submodule은 독립된 git 저장소이므로, 변경 후에는 submodule 내부에서 먼저 commit한 뒤 부모 repo에서 submodule 포인터 변경을 별도 commit한다.
 
+## 원격 저장소 (여러 원격 미러링)
+
+부모 repo와 두 submodule은 **여러 원격에 미러링**될 수 있다. 관례상 처음 클론한 곳을 `origin`, 추가 원격을 `upstream`으로 둔다.
+
+- **`.gitmodules`의 submodule URL은 상대 경로(`../claude-config.git`)로 유지한다. 절대 URL로 되돌리지 말 것.** 상대 경로여야 "부모를 클론한 원격"에 맞춰 submodule 주소가 자동 해석된다. URL을 바꿨다면 `git submodule sync`로 로컬 `.git/config`에 반영한다.
+- **push는 submodule을 먼저, 그다음 부모** 순서로 한다. 여러 원격을 모두 동기화하려면 각 원격(`origin`, `upstream` 등)에 모두 push해야 거울이 어긋나지 않는다. (단, 사용자가 일부 원격만 push하라고 지시할 수 있으니 지시를 따른다.)
+
 ## 주의사항
 
 - 두 submodule은 독립적으로 버전 관리된다. 한쪽 변경을 다른 쪽에 무단으로 옮기지 말 것.
