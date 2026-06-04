@@ -6,18 +6,22 @@
 
 ## Submodules
 
-- **[claude-config/](./claude-config)** — Claude Code의 rules, skills, settings.json을 관리하고 `~/.claude/`로 동기화한다.
-- **[codex-config/](./codex-config)** — Codex의 AGENTS.md, rules, skills를 관리하고 `~/.codex/`로 동기화한다.
+각 submodule은 동일한 패턴을 따른다. **sync 대상 파일은 `home/` 서브디렉터리 안에 있으며, 그 구조가 그대로 `~/.<tool>/`에 미러링된다.** 루트의 다른 파일(`CLAUDE.md`, `README.md`, sync 스크립트 등)은 repo 관리용이지 sync 대상이 아니다.
+
+- **[claude-config/](./claude-config)** — `claude-config/home/`이 `~/.claude/`로 sync.
+- **[codex-config/](./codex-config)** — `codex-config/home/`이 `~/.codex/`로 sync.
 
 ## 작업 위치에 따른 참고 문서
 
-작업 대상이 결정되면 해당 submodule의 agent용 문서를 먼저 읽고 그 지침을 따른다.
+작업 대상이 결정되면 해당 submodule의 meta 문서를 먼저 읽고 그 지침을 따른다.
 
 | 작업 대상 | 먼저 읽을 문서 |
 |---|---|
 | `claude-config/` 내부 작업 | [claude-config/CLAUDE.md](./claude-config/CLAUDE.md) |
 | `codex-config/` 내부 작업 | [codex-config/AGENTS.md](./codex-config/AGENTS.md) |
 | 루트 레벨 작업(submodule 갱신, README 등) | 이 문서 + [README.md](./README.md) |
+
+`*-config/home/` 안의 파일을 수정한 경우, 해당 submodule의 `*-sync-to-home` 스크립트를 실행해 `~/.<tool>/`에 반영한다. 파일을 수정하기 전후로 `*-diff-with-home`을 돌려 어떤 변화가 적용되는지 확인한다.
 
 각 submodule은 독립된 git 저장소이므로, 변경 후에는 submodule 내부에서 먼저 commit한 뒤 부모 repo에서 submodule 포인터 변경을 별도 commit한다.
 
