@@ -112,3 +112,7 @@ git submodule update --remote --merge
 - **공통 패턴 통합** — 두 도구 모두 "repo에서 편집 → 홈 디렉터리로 sync → 커밋" 흐름이 동일하므로, 같은 메타 저장소 아래에 두어 한 번에 clone·관리한다.
 - **도구별 독립성 유지** — 각 설정은 독립 repo(submodule)로 분리되어 있어 도구 단위로 버전 관리·공유가 가능하다.
 - **rules/skills 일관성** — 두 도구가 비슷한 규칙·skill을 공유하므로, 한쪽에서 변경한 내용을 다른 쪽에 옮기기 쉽도록 한 작업 공간에서 비교·동기화한다.
+
+## 관련 문서
+
+- [docs/skill-sync-status.md](./docs/skill-sync-status.md) — skill·rule 항목별로 두 도구(Claude/Codex) 복사본이 동일한지·도구 차이로 변환됐는지(사유 포함)·검증됐는지를 기록한 동기화 검증 현황.
