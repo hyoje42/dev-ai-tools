@@ -30,10 +30,13 @@
 
 | Skill | 차이 유형 | 차이 내용 / 사유 | 검증 | 최종 점검 |
 |---|---|---|---|---|
+| git-commit-message | 변환 | 참조하는 rule 경로 한 줄만 다름: `~/.claude/rules/` ↔ `~/.codex/rules/dev-tools/`. 워크플로(staged 우선 분석·설명·제안)와 한국어 응답 템플릿 담당, 형식 규칙은 rule로 위임 | ✅ | 2026-06-12 |
 | handoff | 변환 | 도구 명칭("Claude/Codex instance"), 작성자 prefix `claude-handoff-`↔`codex-handoff-`, 전역 경로 `~/.claude`↔`~/.codex`. `SKILL.md` + `references/handoff-template.md` 구성 | ✅ | 2026-06-12 |
 | load-handoff | 변환 | handoff와 같은 계열: 작성자 prefix·도구 명칭 치환 (교차 agent 예시는 반대 prefix) | ✅ | 2026-06-12 |
+| load-review | 변환 | peer review 응답자 prefix `claude-response-`↔`codex-response-`, Author 메타데이터, 예시 review 파일 prefix만 도구별로 치환. "검토만 하고 수정 금지", side-effect-free verification, response file 기록 의도는 동일 | ✅ | 2026-06-12 |
 | make-plan | 변환 | 플랜 파일 prefix `claude-plan-`→`codex-plan-`, 세션 명칭. 2026-06-04 드리프트 2건 수정(아래 메모) | ✅ | 2026-06-12 |
 | review-pr | 동일 | 변환 불필요(tool-neutral). `SKILL.md` + `references/` 4종 전부 byte 동일 | ✅ | 2026-06-12 |
+| write-review | 변환 | peer review 작성자 prefix `claude-review-`↔`codex-review-`, Reviewer 메타데이터, 전역 경로 `~/.claude`↔`~/.codex`만 치환. 독립 리뷰, 기존 `.reviews/` 격리, review file만 생성하는 경계는 동일 | ✅ | 2026-06-12 |
 
 ## Rules
 
@@ -41,17 +44,17 @@
 
 | Rule | 차이 유형 | 차이 내용 / 사유 | 검증 | 최종 점검 |
 |---|---|---|---|---|
-| git-commit-guidelines | 동일 | 변환 불필요. 2026-06-12에 skill `git-commit-message`를 흡수해 신설 (아래 메모) | ✅ | 2026-06-12 |
+| git-commit-guidelines | 동일 | 변환 불필요. conventional format, 영어 메시지, AI attribution 금지, 명시적 승인 없이 commit 금지 같은 상시 규칙 담당. `git-commit-message` skill은 호출형 워크플로만 담당 | ✅ | 2026-06-12 |
 | response-format | 변환 | Codex 버전에 "Default Response Language(한국어 응답)" 섹션이 **추가**되고 이후 섹션 번호가 +1씩 밀림. Claude는 settings.json의 `language`로 같은 효과를 얻으므로 의도된 차이 | ✅ | 2026-06-12 |
 | tool-usage | 변환 | 도구명·예시를 Codex 셸 도구로 치환: `Read/Edit/Write/Grep/Glob/Bash` → `rg/sed/find/git/apply_patch`, `Read("./..")` → `sed -n '..' ./..` | ✅ | 2026-06-12 |
 | python-guidelines | 동일 | 변환 불필요. byte 동일 | ✅ | 2026-06-12 |
 
-## 퇴역·흡수된 항목
+## 퇴역·역할 변경 항목
 
 | 항목 | 처리 | 일자 | 비고 |
 |---|---|---|---|
 | setup-team-agents (skill) | 양쪽 `outdated/skills/`로 이동, sync 제외 | 2026-06-12 | 팀 agent 기능이 도구에 네이티브로 들어오면서 사장. 설계 기록용으로 보관 — 각 submodule `outdated/README.md` 참고 |
-| git-commit-message (skill) | 삭제, rule `git-commit-guidelines.md`로 흡수 | 2026-06-12 | skill 본문 대부분이 모델이 이미 아는 내용의 재진술이라, 실질 가치(승인 후 커밋, conventional format, AI attribution 금지)만 rule로 이전 |
+| git-commit-message (skill) | 역할 분리: 형식 규칙을 rule `git-commit-guidelines.md`로 이전하고, 워크플로 부분만 얇은 skill로 유지 | 2026-06-12 | 형식·승인·영어 강제는 rule(상시 적용), "staged만 보고 설명+제안"이라는 호출형 워크플로와 한국어 응답 템플릿은 skill(단축키)로 분리. 둘은 중복 없이 상호 참조 |
 
 ## 항목별 메모
 
@@ -61,9 +64,18 @@
 - handoff 템플릿을 `references/handoff-template.md`로 분리하고, 템플릿을 반복하던 Real Example(~100줄)과 중복 bash 절차를 제거 (289줄 → ~50줄).
 - load-handoff에 "handoff 내용을 현재 코드와 대조 검증" 단계 추가 (make-plan의 검증 규칙과 같은 정신).
 
-### git-commit-guidelines — skill에서 rule로
+### git-commit-guidelines(rule) + git-commit-message(skill) — 역할 분리
 
-커밋 메시지 생성은 skill 트리거 없이도 일상적으로 일어나는 일이라 상시 적용되는 rule이 더 적합하다. "명시적 승인 없이 commit 금지" 원칙도 함께 명문화했다.
+처음에는 skill을 통째로 rule로 흡수했으나, skill의 원래 가치가 "staged diff 보고 설명+메시지 제안"을 한 번에 부르는 **호출형 단축키**였음이 확인되어 같은 날 역할을 분리했다:
+
+- **rule** (상시 적용): conventional format, 50자 제목, **영어 강제**, AI attribution 금지, 명시적 승인 없이 commit 금지. skill을 안 거치는 커밋에도 적용된다.
+- **skill** (호출 시): staged 변경 우선 분석(없으면 전체 working tree를 보고 유연하게 판단) → 파일별 설명 → 메시지 제안 → 승인 대기 워크플로와 한국어 응답 템플릿. 형식 규칙은 rule을 참조해 중복을 없앴다.
+
+### write-review / load-review — 2026-06-12 추가
+
+- `write-review`는 다른 agent/session의 산출물을 독립적으로 검토해 `.reviews/` 아래 review file만 남긴다. 코드·문서 수정, state-mutating git command, 기존 `.reviews/` 무단 읽기를 금지한다.
+- `load-review`는 author 쪽 agent가 review file을 읽고 각 finding을 재검증해 accept/dispute/discuss verdict와 response file만 남긴다. 실제 수정은 사용자가 이후 명시적으로 지시할 때만 수행한다.
+- Claude/Codex 차이는 작성자 prefix(`claude-review-*` / `codex-review-*`, `claude-response-*` / `codex-response-*`)와 meta author/reviewer 값뿐이다. 교차 agent 예시는 의도적으로 반대 prefix를 남긴다.
 
 ### make-plan — 2026-06-04 드리프트 2건 수정
 
@@ -76,9 +88,9 @@
 
 ### 2026-06-12 — 구조 개편 및 기계 검증 도입
 
-- **범위**: skill 6종 → 4종(setup-team-agents 퇴역, git-commit-message 흡수), rule 3종 → 4종(git-commit-guidelines 신설), handoff/load-handoff 재설계.
-- **방법**: 신설된 `./check-sync-status`로 전 쌍 비교. IDENTICAL 3건(review-pr, python-guidelines, git-commit-guidelines), DIFFERS 항목은 diff로 의도된 변환만 존재함을 확인.
-- **결과**: 드리프트 0건. handoff/load-handoff의 차이는 작성자 prefix·도구 명칭·전역 경로 치환뿐임을 line-by-line으로 확인.
+- **범위**: skill 7종(setup-team-agents 퇴역, git-commit-message 역할 분리 후 유지, write-review/load-review 추가), rule 4종(git-commit-guidelines 신설 포함).
+- **방법**: `./check-sync-status`로 전 쌍 비교. IDENTICAL 3건(review-pr, python-guidelines, git-commit-guidelines), DIFFERS 항목은 diff로 의도된 변환만 존재함을 확인.
+- **결과**: 드리프트 0건. DIFFERS 항목(git-commit-message, handoff, load-handoff, load-review, make-plan, write-review, response-format, tool-usage)은 이 문서의 표에 사유를 기록했다.
 
 ### 2026-06-04 — 전체 항목 정합성 감사
 
