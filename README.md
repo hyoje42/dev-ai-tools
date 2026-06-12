@@ -8,9 +8,11 @@
 
 ```
 dev-ai-tools/
+├── check-sync-status     # 두 submodule 간 skill·rule 쌍 비교 스크립트
 ├── claude-config/        # Claude Code 설정 (submodule)
 │   ├── CLAUDE.md         # repo 관리용 meta 문서 (sync 대상 X)
 │   ├── claude-sync-to-home / claude-diff-with-home
+│   ├── outdated/         # 퇴역한 skill·rule 기록용 보관소 (sync 대상 X)
 │   └── home/             # 이 폴더가 ~/.claude/로 sync
 │       ├── rules/
 │       ├── skills/
@@ -19,6 +21,7 @@ dev-ai-tools/
     ├── AGENTS.md         # agent용 meta 문서 (sync 대상 X)
     ├── README.md         # 사람용 개요 (sync 대상 X)
     ├── codex-sync-to-home / codex-diff-with-home
+    ├── outdated/         # 퇴역한 skill·rule 기록용 보관소 (sync 대상 X)
     └── home/             # 이 폴더가 ~/.codex/로 sync
         ├── AGENTS.md     # Codex 전역 지시문 (~/.codex/AGENTS.md로 sync)
         ├── rules/dev-tools/
@@ -116,3 +119,4 @@ git submodule update --remote --merge
 ## 관련 문서
 
 - [docs/skill-sync-status.md](./docs/skill-sync-status.md) — skill·rule 항목별로 두 도구(Claude/Codex) 복사본이 동일한지·도구 차이로 변환됐는지(사유 포함)·검증됐는지를 기록한 동기화 검증 현황.
+- `./check-sync-status` — 두 submodule의 skill·rule 쌍을 기계 비교(IDENTICAL/DIFFERS/한쪽에만 존재). DIFFERS 항목은 위 문서에 사유가 있어야 하며, 사유 없는 DIFFERS는 드리프트다.

@@ -1,0 +1,41 @@
+#!/bin/bash
+
+# Compare skill/rule pairs between claude-config/home and codex-config/home.
+# Output is informational: DIFFERS is not an error — intentional transforms exist.
+# Every DIFFERS item must have a documented reason in docs/skill-sync-status.md.
+
+set -euo pipefail
+
+ROOT="$(cd "$(dirname "$0")" && pwd)"
+CLAUDE_SKILLS="$ROOT/claude-config/home/skills"
+CODEX_SKILLS="$ROOT/codex-config/home/skills"
+CLAUDE_RULES="$ROOT/claude-config/home/rules"
+CODEX_RULES="$ROOT/codex-config/home/rules/dev-tools"
+
+compare() {
+    local label="$1" a="$2" b="$3"
+    if [ ! -e "$a" ]; then
+        printf 'ONLY-CODEX   %s\n' "$label"
+    elif [ ! -e "$b" ]; then
+        printf 'ONLY-CLAUDE  %s\n' "$label"
+    elif diff -rq "$a" "$b" > /dev/null 2>&1; then
+        printf 'IDENTICAL    %s\n' "$label"
+    else
+        printf 'DIFFERS      %s\n' "$label"
+        { diff -rq "$a" "$b" 2>/dev/null || true; } | sed 's/^/             /'
+    fi
+}
+
+echo "== Skills: claude-config/home/skills <-> codex-config/home/skills =="
+for name in $( { ls -1 "$CLAUDE_SKILLS" 2>/dev/null; ls -1 "$CODEX_SKILLS" 2>/dev/null; } | sort -u ); do
+    compare "skills/$name" "$CLAUDE_SKILLS/$name" "$CODEX_SKILLS/$name"
+done
+
+echo ""
+echo "== Rules: claude-config/home/rules <-> codex-config/home/rules/dev-tools =="
+for name in $( { ls -1 "$CLAUDE_RULES" 2>/dev/null; ls -1 "$CODEX_RULES" 2>/dev/null; } | sort -u ); do
+    compare "rules/$name" "$CLAUDE_RULES/$name" "$CODEX_RULES/$name"
+done
+
+echo ""
+echo "Note: DIFFERS items must be justified in docs/skill-sync-status.md."
