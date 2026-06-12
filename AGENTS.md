@@ -21,7 +21,7 @@
 | `codex-config/` 내부 작업 | [codex-config/AGENTS.md](./codex-config/AGENTS.md) |
 | 루트 레벨 작업(submodule 갱신, README 등) | 이 문서 + [README.md](./README.md) |
 
-`*-config/home/` 안의 파일을 수정한 경우, 해당 submodule의 `*-sync-to-home` 스크립트를 실행해 `~/.<tool>/`에 반영한다. 파일을 수정하기 전후로 `*-diff-with-home`을 돌려 어떤 변화가 적용되는지 확인한다.
+`*-config/home/` 안의 파일을 수정한 경우, `*-diff-with-home`을 돌려 어떤 변화가 적용될지 확인하고 그 결과를 사용자에게 공유하는 데까지만 한다. **`~/.<tool>/`로의 반영은 — `*-sync-to-home` 실행이든 수동 복사든 — 사용자가 명시적으로 지시했을 때만 수행한다.** agent가 임의로 sync하지 말 것.
 
 각 submodule은 독립된 git 저장소이므로, 변경 후에는 submodule 내부에서 먼저 commit한 뒤 부모 repo에서 submodule 포인터 변경을 별도 commit한다.
 

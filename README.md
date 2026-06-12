@@ -72,14 +72,15 @@ git push origin main && git push upstream main
 
 ## 작업 흐름
 
-각 도구의 설정을 수정·동기화하는 절차는 동일한 패턴을 따른다.
+각 도구의 설정을 수정하고, 필요할 때 홈 디렉터리에 반영하는 절차는 동일한 패턴을 따른다. `*-sync-to-home`은 실제 `~/.<tool>/`을 바꾸므로, agent가 작업할 때는 사용자의 명시적 지시가 있을 때만 실행한다.
 
 ### Claude Code
 
 ```bash
 cd claude-config
 # home/rules/, home/skills/, home/settings.json 수정
-./claude-diff-with-home    # ~/.claude/와 차이 확인
+./claude-diff-with-home    # ~/.claude/와 차이 확인 후 공유
+# 사용자가 명시적으로 지시한 경우에만:
 ./claude-sync-to-home      # ~/.claude/에 반영
 git add -A && git commit   # 변경 이력 커밋
 ```
@@ -89,7 +90,8 @@ git add -A && git commit   # 변경 이력 커밋
 ```bash
 cd codex-config
 # home/AGENTS.md, home/rules/dev-tools/, home/skills/ 수정
-./codex-diff-with-home     # ~/.codex/와 차이 확인
+./codex-diff-with-home     # ~/.codex/와 차이 확인 후 공유
+# 사용자가 명시적으로 지시한 경우에만:
 ./codex-sync-to-home       # ~/.codex/에 반영
 git add -A && git commit   # 변경 이력 커밋
 ```
@@ -112,7 +114,7 @@ git submodule update --remote --merge
 
 ## 설계 의도
 
-- **공통 패턴 통합** — 두 도구 모두 "repo에서 편집 → 홈 디렉터리로 sync → 커밋" 흐름이 동일하므로, 같은 메타 저장소 아래에 두어 한 번에 clone·관리한다.
+- **공통 패턴 통합** — 두 도구 모두 "repo에서 편집 → diff 확인 → 필요 시 홈 디렉터리로 sync → 커밋" 흐름이 동일하므로, 같은 메타 저장소 아래에 두어 한 번에 clone·관리한다.
 - **도구별 독립성 유지** — 각 설정은 독립 repo(submodule)로 분리되어 있어 도구 단위로 버전 관리·공유가 가능하다.
 - **rules/skills 일관성** — 두 도구가 비슷한 규칙·skill을 공유하므로, 한쪽에서 변경한 내용을 다른 쪽에 옮기기 쉽도록 한 작업 공간에서 비교·동기화한다.
 
