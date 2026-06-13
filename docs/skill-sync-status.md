@@ -33,8 +33,8 @@
 | git-commit-message | 변환 | 참조하는 rule 경로 한 줄만 다름: `~/.claude/rules/` ↔ `~/.codex/rules/dev-tools/`. 워크플로(staged 우선 분석·설명·제안)와 한국어 응답 템플릿 담당, 형식 규칙은 rule로 위임 | ✅ | 2026-06-12 |
 | handoff | 변환 | 도구 명칭("Claude/Codex instance"), 작성자 prefix `claude-handoff-`↔`codex-handoff-`, 전역 경로 `~/.claude`↔`~/.codex`. `SKILL.md` + `references/handoff-template.md` 구성 | ✅ | 2026-06-12 |
 | load-handoff | 변환 | handoff와 같은 계열: 작성자 prefix·도구 명칭 치환 (교차 agent 예시는 반대 prefix) | ✅ | 2026-06-12 |
-| load-review | 변환 | peer review 응답자 prefix `claude-response-`↔`codex-response-`, Author 메타데이터, 예시 review 파일 prefix만 도구별로 치환. "검토만 하고 수정 금지", side-effect-free verification, response file 기록 의도는 동일 | ✅ | 2026-06-12 |
 | make-plan | 변환 | 플랜 파일 prefix `claude-plan-`→`codex-plan-`, 세션 명칭. 2026-06-04 드리프트 2건 수정(아래 메모) | ✅ | 2026-06-12 |
+| read-review | 변환 | peer review 응답자 prefix `claude-response-`↔`codex-response-`, Author 메타데이터, 예시 review 파일 prefix만 도구별로 치환. "검토만 하고 수정 금지", side-effect-free verification, response file 기록 의도는 동일 | ✅ | 2026-06-14 |
 | review-pr | 동일 | 변환 불필요(tool-neutral). `SKILL.md` + `references/` 4종 전부 byte 동일 | ✅ | 2026-06-12 |
 | write-review | 변환 | peer review 작성자 prefix `claude-review-`↔`codex-review-`, Reviewer 메타데이터, 전역 경로 `~/.claude`↔`~/.codex`만 치환. 독립 리뷰, 기존 `.reviews/` 격리, review file만 생성하는 경계는 동일 | ✅ | 2026-06-12 |
 
@@ -71,10 +71,10 @@
 - **rule** (상시 적용): conventional format, 50자 제목, **영어 강제**, AI attribution 금지, 명시적 승인 없이 commit 금지. skill을 안 거치는 커밋에도 적용된다.
 - **skill** (호출 시): staged 변경 우선 분석(없으면 전체 working tree를 보고 유연하게 판단) → 파일별 설명 → 메시지 제안 → 승인 대기 워크플로와 한국어 응답 템플릿. 형식 규칙은 rule을 참조해 중복을 없앴다.
 
-### write-review / load-review — 2026-06-12 추가
+### write-review / read-review — 2026-06-12 추가
 
 - `write-review`는 다른 agent/session의 산출물을 독립적으로 검토해 `.reviews/` 아래 review file만 남긴다. 코드·문서 수정, state-mutating git command, 기존 `.reviews/` 무단 읽기를 금지한다.
-- `load-review`는 author 쪽 agent가 review file을 읽고 각 finding을 재검증해 accept/dispute/discuss verdict와 response file만 남긴다. 실제 수정은 사용자가 이후 명시적으로 지시할 때만 수행한다.
+- `read-review`는 author 쪽 agent가 review file을 읽고 각 finding을 재검증해 accept/dispute/discuss verdict와 response file만 남긴다. 실제 수정은 사용자가 이후 명시적으로 지시할 때만 수행한다.
 - Claude/Codex 차이는 작성자 prefix(`claude-review-*` / `codex-review-*`, `claude-response-*` / `codex-response-*`)와 meta author/reviewer 값뿐이다. 교차 agent 예시는 의도적으로 반대 prefix를 남긴다.
 
 ### make-plan — 2026-06-04 드리프트 2건 수정
@@ -85,6 +85,11 @@
 2. **버전 예시 의미 붕괴**: "다른 에이전트의 플랜을 이어받는" 예시가 `claude-`→`codex-` 일괄치환으로 **소스 파일명까지** 바뀌어 위 줄과 중복·자기모순(`continues from codex`)이 됨. → 소스를 `claude-plan.md` / `(continues from claude)`로 복원해 교차 에이전트 예시의 의미를 되살림.
 
 ## 검증 이력
+
+### 2026-06-14 — load-review → read-review 이름 변경
+
+- `load-review` skill을 `read-review`로 rename(`write-review`와 대비되는 read/write 짝). 양쪽 submodule(`claude-config`·`codex-config`)의 `home/skills/load-review/` 디렉터리를 `read-review/`로 옮기고(`git mv`), `SKILL.md` frontmatter·heading·invocation(`/read-review`)·description, `references/response-template.md`, `write-review`의 교차 참조, 이 문서의 표·메모를 일괄 갱신.
+- 동작·변환 차이는 종전과 동일. 같은 날 `./check-sync-status` 실행 결과 `skills/read-review`는 정상 매칭 DIFFERS 쌍(한쪽에만 존재 없음)이고, claude↔codex diff는 의도된 변환(응답자 prefix `claude-response-`↔`codex-response-`, 예시 review 파일명, meta `Author` 값)뿐임을 확인. 표의 "최종 점검"도 2026-06-14로 갱신.
 
 ### 2026-06-12 — 구조 개편 및 기계 검증 도입
 
