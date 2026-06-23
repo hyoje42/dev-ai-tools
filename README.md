@@ -7,7 +7,7 @@
 ## 구성
 
 - **[claude-config/](./claude-config)** — Claude Code 설정(rules·skills·settings)을 관리하고 `~/.claude/`와 동기화한다.
-- **[codex-config/](./codex-config)** — Codex 설정(rules·skills·전역 지시문)을 관리하고 `~/.codex/`와 동기화한다.
+- **[codex-config/](./codex-config)** — Codex 설정(skills·전역 지시문)을 관리하고 `~/.codex/`와 동기화한다.
 
 각 submodule의 디렉터리 구조·스크립트·사용법 등 상세는 **해당 repo의 README**에 있다([claude-config/README.md](./claude-config/README.md), [codex-config/README.md](./codex-config/README.md)). 이 문서는 메타 repo 전체에 공통인 내용만 다룬다.
 
@@ -70,9 +70,9 @@ git submodule update --remote --merge
 
 - **공통 패턴 통합** — 두 도구 모두 "repo에서 편집 → diff 확인 → 필요 시 홈으로 sync → 커밋" 흐름이 같아, 한 메타 저장소에서 함께 관리한다.
 - **도구별 독립성 유지** — 각 설정은 독립 submodule이라 도구 단위로 버전 관리·공유가 가능하다.
-- **rules/skills 일관성** — 두 도구가 비슷한 규칙·skill을 공유하므로 한 작업 공간에서 비교·동기화한다.
+- **skill 일관성·rule 정합성** — 두 도구가 skill을 공유하므로 한 작업 공간에서 비교·동기화한다(`check-sync-status`). 규칙은 도구별 위치가 달라(claude `home/rules/` ↔ codex `home/AGENTS.md`) 기계 비교 대신 같은 공간에서 함께 관리해 어긋나지 않게 한다.
 
 ## 관련 문서
 
-- [docs/skill-sync-status.md](./docs/skill-sync-status.md) — skill·rule이 두 도구(Claude/Codex) 간 동일한지·도구 차이로 변환됐는지·검증됐는지를 기록한 동기화 현황.
-- `./check-sync-status` — 두 submodule의 skill·rule 쌍을 기계 비교(IDENTICAL/DIFFERS/한쪽에만 존재).
+- [docs/skill-sync-status.md](./docs/skill-sync-status.md) — skill이 두 도구(Claude/Codex) 간 동일한지·도구 차이로 변환됐는지·검증됐는지, 그리고 rule의 도구 간 배치(claude `home/rules/` ↔ codex `home/AGENTS.md`)를 기록한 동기화 현황.
+- `./check-sync-status` — 두 submodule의 skill 쌍을 기계 비교(IDENTICAL/DIFFERS/한쪽에만 존재). 규칙은 도구별 위치가 달라(claude `home/rules/` ↔ codex `home/AGENTS.md`) 비교 대상이 아니다.

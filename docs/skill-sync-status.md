@@ -2,7 +2,7 @@
 
 `claude-config/home/`과 `codex-config/home/`의 같은 항목(skill·rule)이 어떤 상태인지 항목별로 기록한다. 각 항목에 대해 (1) 두 도구 버전이 **동일/변환/재작성** 중 무엇인지, (2) 변환됐다면 **무엇이·왜** 다른지, (3) **검증 상태**를 남긴다.
 
-**기계 검증**: repo 루트의 `./check-sync-status`가 모든 skill·rule 쌍을 비교해 IDENTICAL / DIFFERS / 한쪽에만 존재를 보고한다. "동일" 주장의 byte 동일성은 이 스크립트로 검증하고, 이 문서는 **DIFFERS 항목의 사유 기록**에 집중한다. DIFFERS인데 이 문서에 사유가 없으면 드리프트로 간주한다.
+**기계 검증**: repo 루트의 `./check-sync-status`가 모든 skill 쌍을 비교해 IDENTICAL / DIFFERS / 한쪽에만 존재를 보고한다(rule은 2026-06-23 통합으로 비교 대상에서 제외 — 아래 'Rules' 참고). "동일" 주장의 byte 동일성은 이 스크립트로 검증하고, 이 문서는 **DIFFERS 항목의 사유 기록**에 집중한다. DIFFERS인데 이 문서에 사유가 없으면 드리프트로 간주한다.
 
 새로 점검하거나 항목이 바뀌면 이 표와 "검증 이력"을 갱신한다.
 
@@ -30,7 +30,7 @@
 
 | Skill | 차이 유형 | 차이 내용 / 사유 | 검증 | 최종 점검 |
 |---|---|---|---|---|
-| git-commit-message | 변환 | 참조하는 rule 경로 한 줄만 다름: `~/.claude/rules/` ↔ `~/.codex/rules/dev-tools/`. 워크플로(staged 우선 분석·설명·제안)와 한국어 응답 템플릿 담당, 형식 규칙은 rule로 위임 | ✅ | 2026-06-12 |
+| git-commit-message | 동일 | **자기완결형**: 커밋 형식·언어·승인 규칙을 SKILL.md에 직접 인라인(전역 규칙과 의도적 중복 — 독립성 우선). 워크플로·한국어 응답 템플릿 포함, claude/codex byte 동일 | ✅ | 2026-06-23 |
 | handoff | 변환 | 도구 명칭("Claude/Codex instance"), 작성자 prefix `claude-handoff-`↔`codex-handoff-`, 전역 경로 `~/.claude`↔`~/.codex`. `SKILL.md` + `references/handoff-template.md` 구성 | ✅ | 2026-06-12 |
 | load-handoff | 변환 | handoff와 같은 계열: 작성자 prefix·도구 명칭 치환 (교차 agent 예시는 반대 prefix) | ✅ | 2026-06-12 |
 | make-plan | 변환 | 플랜 파일 prefix `claude-plan-`→`codex-plan-`, 세션 명칭. 2026-06-04 드리프트 2건 수정(아래 메모) | ✅ | 2026-06-12 |
@@ -40,14 +40,12 @@
 
 ## Rules
 
-경로: `claude-config/home/rules/<f>` ↔ `codex-config/home/rules/dev-tools/<f>`
+2026-06-23부로 **Codex 전역 규칙을 `home/AGENTS.md`로 통합**하고 `home/rules/dev-tools/`를 제거했다(아래 검증 이력 참고). 따라서 rule은 더 이상 도구 간 파일 단위로 짝지어지지 않는다:
 
-| Rule | 차이 유형 | 차이 내용 / 사유 | 검증 | 최종 점검 |
-|---|---|---|---|---|
-| git-commit-guidelines | 동일 | 변환 불필요. conventional format, 영어 메시지, AI attribution 금지, 명시적 승인 없이 commit 금지 같은 상시 규칙 담당. `git-commit-message` skill은 호출형 워크플로만 담당 | ✅ | 2026-06-12 |
-| response-format | 변환 | Codex 버전에 "Default Response Language(한국어 응답)" 섹션이 **추가**되고 이후 섹션 번호가 +1씩 밀림. Claude는 settings.json의 `language`로 같은 효과를 얻으므로 의도된 차이 | ✅ | 2026-06-12 |
-| tool-usage | 변환 | 도구명·예시를 Codex 셸 도구로 치환: `Read/Edit/Write/Grep/Glob/Bash` → `rg/sed/find/git/apply_patch`, `Read("./..")` → `sed -n '..' ./..` | ✅ | 2026-06-12 |
-| python-guidelines | 동일 | 변환 불필요. byte 동일 | ✅ | 2026-06-12 |
+- **Claude**: `home/rules/*.md` 개별 파일 (`~/.claude/rules/`로 auto-load)
+- **Codex**: `home/AGENTS.md` 섹션 (단일 파일만 operative — `~/.codex/rules/`는 지시문으로 로드되지 않음: [agents-md 가이드](https://developers.openai.com/codex/guides/agents-md), [#23788](https://github.com/openai/codex/issues/23788))
+
+`check-sync-status`는 이제 **skills만** 비교한다. rule 내용의 도구 간 정합성은 codex `home/AGENTS.md` ↔ claude `home/rules/`를 사람이 직접 대조한다.
 
 ## 퇴역·역할 변경 항목
 
@@ -70,6 +68,7 @@
 
 - **rule** (상시 적용): conventional format, 50자 제목, **영어 강제**, AI attribution 금지, 명시적 승인 없이 commit 금지. skill을 안 거치는 커밋에도 적용된다.
 - **skill** (호출 시): staged 변경 우선 분석(없으면 전체 working tree를 보고 유연하게 판단) → 파일별 설명 → 메시지 제안 → 승인 대기 워크플로와 한국어 응답 템플릿. 형식 규칙은 rule을 참조해 중복을 없앴다.
+- **2026-06-23**: ① Codex 전역 규칙을 `rules/dev-tools/`에서 `AGENTS.md`로 통합(`git-commit-guidelines` 포함). ② 이후 `git-commit-message` skill을 **자기완결형**으로 전환 — 형식·언어·승인 규칙을 SKILL.md에 직접 인라인(claude/codex 동일). 전역 규칙(codex `AGENTS.md` / claude `rules/git-commit-guidelines.md`)은 skill 안 거친 **직접 커밋**용으로 유지. skill 단독 사용·전역 설정 상이 케이스를 위해 독립성을 택한 결정이라 **의도적 중복**이며, 두 사본은 수동으로 동기 유지한다.
 
 ### write-review / read-review — 2026-06-12 추가
 
@@ -85,6 +84,16 @@
 2. **버전 예시 의미 붕괴**: "다른 에이전트의 플랜을 이어받는" 예시가 `claude-`→`codex-` 일괄치환으로 **소스 파일명까지** 바뀌어 위 줄과 중복·자기모순(`continues from codex`)이 됨. → 소스를 `claude-plan.md` / `(continues from claude)`로 복원해 교차 에이전트 예시의 의미를 되살림.
 
 ## 검증 이력
+
+### 2026-06-23 — agent 지시 rule 추가 · Codex rules 로딩 검증 · dev-tools 통합 제거
+
+- **새 rule**: "agent 지시 파일(AGENTS.md / CLAUDE.md) 작성" 전역 지시 추가. AGENTS.md는 개발 내용 위주로 간결하게(상세는 다른 문서 가리키기), CLAUDE.md는 `@AGENTS.md` import로 단일 소스화. 기본값이며 사용자의 명시적 지시가 우선. 배치: claude `home/rules/agent-instruction-files.md`(영어) + codex `home/AGENTS.md` 섹션(영어, 2026-06-23 영문화).
+- **Codex rules 로딩 검증**: 공식 문서 확인 결과 Codex 전역 지시문은 `~/.codex/AGENTS.override.md`/`AGENTS.md` **단일 파일**만 로드하고 `~/.codex/rules/*.md`는 지시문으로 자동 로드하지 않는다(rules-디렉터리 auto-load는 미구현 — [agents-md 가이드](https://developers.openai.com/codex/guides/agents-md), [#23788](https://github.com/openai/codex/issues/23788)).
+- **dev-tools 통합 제거**: 위 결론에 따라 `codex-config/home/rules/dev-tools/`(4개)를 삭제하고 Codex 전역 규칙을 `home/AGENTS.md` 단일 소스로 통합. response-format·tool-usage·python은 이미 AGENTS.md 섹션에 있던 죽은 사본이었고, `git-commit-guidelines`는 AGENTS.md 'Git 커밋' 섹션으로 이전해 기존 미적용 갭을 해소. `git-commit-message` skill의 참조 경로도 AGENTS.md로 수정. response-format의 §4(Plan Mode Output Language)는 Codex에 plan mode가 없어 통합 시 의도적으로 누락(Claude 전용).
+- **연관 정리**: codex `README.md`(구조·동기화 위치), `codex-diff-with-home`·`codex-sync-to-home`의 `MANAGED_DIRS`(`rules/dev-tools` 제거), repo 루트 `check-sync-status`(Rules 비교 제거 — 이제 skills만), 이 문서의 'Rules' 섹션을 갱신.
+- **git-commit-message 자기완결화**: 사용자 요청으로 commit 규칙(형식·언어·승인)을 양쪽 skill의 SKILL.md에 인라인 → 전역 설정과 무관하게 동작(독립성 우선, 전역 규칙과 의도적 중복). 전역 규칙은 직접 커밋 커버용으로 유지. 이로써 claude/codex `git-commit-message` SKILL.md는 byte 동일이 됨.
+- **load-handoff 자기완결화**: skill 독립성 점검 중 발견 — step 2가 `handoff` skill의 `references/handoff-template.md`(외부 skill 파일)를 가리키던 것을 제거하고 표준 handoff 구조(섹션 목록)를 SKILL.md에 직접 서술. claude·codex 동일 적용(짝 결합 의존 해소). 나머지 skill(handoff·make-plan·read-review·review-pr·write-review)은 번들 references가 자기 디렉터리 안에서 해소됨을 확인.
+- **남은 작업**: 이미 sync한 머신은 `~/.codex/rules/dev-tools/`가 잔류할 수 있으니 수동 삭제 권장(Codex가 읽지 않아 무해하지만 정리 차원).
 
 ### 2026-06-14 — load-review → read-review 이름 변경
 
