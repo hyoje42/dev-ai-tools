@@ -1,6 +1,8 @@
 #!/bin/bash
 
-# Compare skill/rule pairs between claude-config/home and codex-config/home.
+# Compare skill pairs between claude-config/home and codex-config/home.
+# (Codex rules were consolidated into AGENTS.md on 2026-06-23 and are no longer
+#  file-paired across tools, so only skills are compared here.)
 # Output is informational: DIFFERS is not an error — intentional transforms exist.
 # Every DIFFERS item must have a documented reason in docs/skill-sync-status.md.
 
@@ -9,8 +11,6 @@ set -euo pipefail
 ROOT="$(cd "$(dirname "$0")" && pwd)"
 CLAUDE_SKILLS="$ROOT/claude-config/home/skills"
 CODEX_SKILLS="$ROOT/codex-config/home/skills"
-CLAUDE_RULES="$ROOT/claude-config/home/rules"
-CODEX_RULES="$ROOT/codex-config/home/rules/dev-tools"
 
 compare() {
     local label="$1" a="$2" b="$3"
@@ -32,10 +32,6 @@ for name in $( { ls -1 "$CLAUDE_SKILLS" 2>/dev/null; ls -1 "$CODEX_SKILLS" 2>/de
 done
 
 echo ""
-echo "== Rules: claude-config/home/rules <-> codex-config/home/rules/dev-tools =="
-for name in $( { ls -1 "$CLAUDE_RULES" 2>/dev/null; ls -1 "$CODEX_RULES" 2>/dev/null; } | sort -u ); do
-    compare "rules/$name" "$CLAUDE_RULES/$name" "$CODEX_RULES/$name"
-done
-
-echo ""
 echo "Note: DIFFERS items must be justified in docs/skill-sync-status.md."
+echo "Note: Rules are not auto-compared (Codex consolidated them into home/AGENTS.md)."
+echo "      Manually verify codex home/AGENTS.md sections <-> claude home/rules/*.md."
