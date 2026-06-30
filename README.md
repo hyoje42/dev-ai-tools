@@ -75,4 +75,5 @@ git submodule update --remote --merge
 ## 관련 문서
 
 - [docs/skill-sync-status.md](./docs/skill-sync-status.md) — skill이 두 도구(Claude/Codex) 간 동일한지·도구 차이로 변환됐는지·검증됐는지, 그리고 rule의 도구 간 배치(claude `home/rules/` ↔ codex `home/AGENTS.md`)를 기록한 동기화 현황.
+- [docs/codex-config-from-claude.md](./docs/codex-config-from-claude.md) — codex-config가 claude-config에서 무엇을 가져오고/제외했는지와 설정·skill 변환 정책(두 submodule 관계는 부모에서 설명).
 - `./check-sync-status` — 두 submodule의 skill 쌍을 기계 비교(IDENTICAL/DIFFERS/한쪽에만 존재). 규칙은 도구별 위치가 달라(claude `home/rules/` ↔ codex `home/AGENTS.md`) 비교 대상이 아니다.
