@@ -1,0 +1,24 @@
+#!/bin/bash
+
+set -euo pipefail
+
+SRC="$(cd "$(dirname "$0")" && pwd)/.tmux.conf"
+DEST="$HOME/.tmux.conf"
+
+if [ -f "$DEST" ] && cmp -s "$SRC" "$DEST"; then
+    echo "변경 사항 없음."
+    exit 0
+fi
+
+if [ -f "$DEST" ]; then
+    { diff -u "$DEST" "$SRC" --label "~/.tmux.conf" --label "repo/.tmux.conf" || true; }
+else
+    { diff -u /dev/null "$SRC" --label "~/.tmux.conf" --label "repo/.tmux.conf" || true; }
+fi
+
+echo ""
+read -r -p "이 변경을 ~/.tmux.conf에 적용할까요? [y/N]: " ans || ans=""
+if [[ "$ans" =~ ^[Yy]$ ]]; then
+    cp "$SRC" "$DEST"
+    echo "완료."
+fi
