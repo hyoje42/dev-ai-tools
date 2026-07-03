@@ -30,13 +30,13 @@
 
 | Skill | 차이 유형 | 차이 내용 / 사유 | 검증 | 최종 점검 |
 |---|---|---|---|---|
-| git-commit-message | 동일 | **자기완결형**: 커밋 형식·언어·승인 규칙을 SKILL.md에 직접 인라인(전역 규칙과 의도적 중복 — 독립성 우선). 워크플로·한국어 응답 템플릿 포함, claude/codex byte 동일 | ✅ | 2026-06-23 |
-| handoff | 변환 | 도구 명칭("Claude/Codex instance"), 작성자 prefix `claude-handoff-`↔`codex-handoff-`, 전역 경로 `~/.claude`↔`~/.codex`. `SKILL.md` + `references/handoff-template.md` 구성 | ✅ | 2026-06-12 |
-| load-handoff | 변환 | handoff와 같은 계열: 작성자 prefix·도구 명칭 치환 (교차 agent 예시는 반대 prefix) | ✅ | 2026-06-12 |
-| make-plan | 변환 | 플랜 파일 prefix `claude-plan-`→`codex-plan-`, 세션 명칭. 2026-06-04 드리프트 2건 수정(아래 메모) | ✅ | 2026-06-12 |
-| read-review | 변환 | peer review 응답자 prefix `claude-response-`↔`codex-response-`, Author 메타데이터, 예시 review 파일 prefix만 도구별로 치환. "검토만 하고 수정 금지", side-effect-free verification, response file 기록 의도는 동일 | ✅ | 2026-06-14 |
-| review-pr | 동일 | 변환 불필요(tool-neutral). `SKILL.md` + `references/` 4종 전부 byte 동일 | ✅ | 2026-06-12 |
-| write-review | 변환 | peer review 작성자 prefix `claude-review-`↔`codex-review-`, Reviewer 메타데이터, 전역 경로 `~/.claude`↔`~/.codex`만 치환. 독립 리뷰, 기존 `.reviews/` 격리, review file만 생성하는 경계는 동일 | ✅ | 2026-06-12 |
+| git-commit-message | 동일 | **자기완결형**: 커밋 형식·언어·승인 규칙을 SKILL.md에 직접 인라인(전역 규칙과 의도적 중복 — 독립성 우선). 워크플로·한국어 응답 템플릿 포함, claude/codex byte 동일 | ✅ | 2026-07-03 |
+| handoff | 변환 | 도구 명칭("Claude/Codex instance"), 작성자 prefix `claude-handoff-`↔`codex-handoff-`, 전역 경로 `~/.claude`↔`~/.codex`. `SKILL.md` + `references/handoff-template.md` 구성 | ✅ | 2026-07-03 |
+| load-handoff | 변환 | handoff와 같은 계열: 작성자 prefix·도구 명칭 치환(교차 agent 예시는 반대 prefix), 호출 예시 `/load_handoff`↔`$load-handoff` | ✅ | 2026-07-03 |
+| make-plan | 변환 | 플랜 파일 prefix `claude-plan-`↔`codex-plan-`, 세션 명칭, 호출 표기 `/make-plan`↔`$make-plan`. 2026-06-04 드리프트 2건과 2026-07-03 Codex 예시 문구 수정(아래 메모) | ✅ | 2026-07-03 |
+| read-review | 변환 | peer review 응답자 prefix `claude-response-`↔`codex-response-`, Author 메타데이터, 예시 review 파일 prefix와 호출 표기 `/read-review`↔`$read-review`만 도구별로 치환. "검토만 하고 수정 금지", side-effect-free verification, response file 기록 의도는 동일 | ✅ | 2026-07-03 |
+| review-pr | 변환 | 본문 workflow와 `references/` 4종은 tool-neutral이고 references는 byte 동일. `SKILL.md`의 호출 표기만 Claude slash command(`/review-pr`) ↔ Codex skill command(`$review-pr`)로 다름 | ✅ | 2026-07-03 |
+| write-review | 변환 | peer review 작성자 prefix `claude-review-`↔`codex-review-`, Reviewer 메타데이터, 전역 경로 `~/.claude`↔`~/.codex`, 호출 표기 `/write-review`·`/read-review`↔`$write-review`·`$read-review`만 치환. 독립 리뷰, 기존 `.reviews/` 격리, review file만 생성하는 경계는 동일 | ✅ | 2026-07-03 |
 
 ## Rules
 
@@ -52,7 +52,7 @@
 | 항목 | 처리 | 일자 | 비고 |
 |---|---|---|---|
 | setup-team-agents (skill) | 양쪽 `outdated/skills/`로 이동, sync 제외 | 2026-06-12 | 팀 agent 기능이 도구에 네이티브로 들어오면서 사장. 설계 기록용으로 보관 — 각 submodule `outdated/README.md` 참고 |
-| git-commit-message (skill) | 역할 분리: 형식 규칙을 rule `git-commit-guidelines.md`로 이전하고, 워크플로 부분만 얇은 skill로 유지 | 2026-06-12 | 형식·승인·영어 강제는 rule(상시 적용), "staged만 보고 설명+제안"이라는 호출형 워크플로와 한국어 응답 템플릿은 skill(단축키)로 분리. 둘은 중복 없이 상호 참조 |
+| git-commit-message (skill) | 역할 분리 후 자기완결형으로 재확장 | 2026-06-12 / 2026-06-23 | 2026-06-12에는 형식 규칙을 rule로 분리하고 skill을 호출형 워크플로로 얇게 유지했다. 2026-06-23에는 skill 독립성을 위해 형식·언어·승인 규칙을 SKILL.md에 다시 인라인했다(전역 rule과 의도적 중복). 현재 claude/codex skill은 byte 동일 |
 
 ## 항목별 메모
 
@@ -74,7 +74,7 @@
 
 - `write-review`는 다른 agent/session의 산출물을 독립적으로 검토해 `.reviews/` 아래 review file만 남긴다. 코드·문서 수정, state-mutating git command, 기존 `.reviews/` 무단 읽기를 금지한다.
 - `read-review`는 author 쪽 agent가 review file을 읽고 각 finding을 재검증해 accept/dispute/discuss verdict와 response file만 남긴다. 실제 수정은 사용자가 이후 명시적으로 지시할 때만 수행한다.
-- Claude/Codex 차이는 작성자 prefix(`claude-review-*` / `codex-review-*`, `claude-response-*` / `codex-response-*`)와 meta author/reviewer 값뿐이다. 교차 agent 예시는 의도적으로 반대 prefix를 남긴다.
+- 현재 Claude/Codex 차이는 작성자 prefix(`claude-review-*` / `codex-review-*`, `claude-response-*` / `codex-response-*`), meta author/reviewer 값, 호출 표기(`/write-review`·`/read-review` ↔ `$write-review`·`$read-review`)다. 교차 agent 예시는 의도적으로 반대 prefix를 남긴다.
 
 ### make-plan — 2026-06-04 드리프트 2건 수정
 
@@ -83,13 +83,22 @@
 1. **중복 문구**: "... referenced by future Codex sessions or other coding agents **or other coding agents**." → 중복 절 제거(Claude 버전은 한 번만 등장).
 2. **버전 예시 의미 붕괴**: "다른 에이전트의 플랜을 이어받는" 예시가 `claude-`→`codex-` 일괄치환으로 **소스 파일명까지** 바뀌어 위 줄과 중복·자기모순(`continues from codex`)이 됨. → 소스를 `claude-plan.md` / `(continues from claude)`로 복원해 교차 에이전트 예시의 의미를 되살림.
 
+2026-07-03 재점검에서 Codex 쪽 "other agents" 설명문이 `codex-plan.md`를 예시로 들어 자기 prefix를 다른 agent 예시처럼 보이게 하던 문구를 발견했다. → Claude 문장 구조를 유지하되 Codex 기준의 다른 agent 예시(`claude-plan.md`, `cursor-plan.md`)만 남겨 대칭을 맞췄다.
+
 ## 검증 이력
+
+### 2026-07-03 — skill 호출 표기 변환 반영 및 전 항목 재검증
+
+- `./check-sync-status` 실행 결과 한쪽에만 존재하는 skill은 없었다. `git-commit-message`는 IDENTICAL, `handoff`·`load-handoff`·`make-plan`·`read-review`·`review-pr`·`write-review`는 DIFFERS로 확인했다.
+- 각 DIFFERS 항목을 diff로 대조한 결과 모두 의도된 변환이었다. 공통 패턴은 도구명(Claude/Codex), 저장 prefix(`claude-*`/`codex-*`), 전역 경로(`~/.claude`/`~/.codex`), 호출 표기(Claude slash command `/...` ↔ Codex skill command `$...`) 차이다.
+- `review-pr`는 이전 문서에서 byte 동일로 기록돼 있었으나, 현재 Codex skill의 호출 표기가 `$review-pr`로 바뀌어 `SKILL.md`만 의도적으로 다르다. `references/` 4종은 여전히 byte 동일이다.
+- rule 쪽도 수동 대조했다. Codex `home/AGENTS.md`는 Claude `home/rules/`의 response-format·tool-usage·python·git-commit·agent-instruction 내용을 단일 파일에 통합한 상태다. response-format §3은 양쪽 모두 "Document Output Language" 규칙으로 갱신되어, 문서·저장 산출물 작성 시 사용자 요청 언어/기존 문서 언어를 따르도록 맞춰졌다.
 
 ### 2026-06-23 — agent 지시 rule 추가 · Codex rules 로딩 검증 · dev-tools 통합 제거
 
 - **새 rule**: "agent 지시 파일(AGENTS.md / CLAUDE.md) 작성" 전역 지시 추가. AGENTS.md는 개발 내용 위주로 간결하게(상세는 다른 문서 가리키기), CLAUDE.md는 `@AGENTS.md` import로 단일 소스화. 기본값이며 사용자의 명시적 지시가 우선. 배치: claude `home/rules/agent-instruction-files.md`(영어) + codex `home/AGENTS.md` 섹션(영어, 2026-06-23 영문화).
 - **Codex rules 로딩 검증**: 공식 문서 확인 결과 Codex 전역 지시문은 `~/.codex/AGENTS.override.md`/`AGENTS.md` **단일 파일**만 로드하고 `~/.codex/rules/*.md`는 지시문으로 자동 로드하지 않는다(rules-디렉터리 auto-load는 미구현 — [agents-md 가이드](https://developers.openai.com/codex/guides/agents-md), [#23788](https://github.com/openai/codex/issues/23788)).
-- **dev-tools 통합 제거**: 위 결론에 따라 `codex-config/home/rules/dev-tools/`(4개)를 삭제하고 Codex 전역 규칙을 `home/AGENTS.md` 단일 소스로 통합. response-format·tool-usage·python은 이미 AGENTS.md 섹션에 있던 죽은 사본이었고, `git-commit-guidelines`는 AGENTS.md 'Git 커밋' 섹션으로 이전해 기존 미적용 갭을 해소. `git-commit-message` skill의 참조 경로도 AGENTS.md로 수정. response-format의 §4(Plan Mode Output Language)는 Codex에 plan mode가 없어 통합 시 의도적으로 누락(Claude 전용).
+- **dev-tools 통합 제거**: 위 결론에 따라 `codex-config/home/rules/dev-tools/`(4개)를 삭제하고 Codex 전역 규칙을 `home/AGENTS.md` 단일 소스로 통합. response-format·tool-usage·python은 이미 AGENTS.md 섹션에 있던 죽은 사본이었고, `git-commit-guidelines`는 AGENTS.md 'Git 커밋' 섹션으로 이전해 기존 미적용 갭을 해소. `git-commit-message` skill의 참조 경로도 AGENTS.md로 수정. 당시 response-format의 §4(Plan Mode Output Language)는 Codex에 plan mode가 없어 통합 시 의도적으로 누락(Claude 전용)이었으나, 2026-07-03 현재는 양쪽 모두 문서·저장 산출물 언어 규칙으로 갱신됐다.
 - **연관 정리**: codex `README.md`(구조·동기화 위치), `codex-diff-with-home`·`codex-sync-to-home`의 `MANAGED_DIRS`(`rules/dev-tools` 제거), repo 루트 `check-sync-status`(Rules 비교 제거 — 이제 skills만), 이 문서의 'Rules' 섹션을 갱신.
 - **git-commit-message 자기완결화**: 사용자 요청으로 commit 규칙(형식·언어·승인)을 양쪽 skill의 SKILL.md에 인라인 → 전역 설정과 무관하게 동작(독립성 우선, 전역 규칙과 의도적 중복). 전역 규칙은 직접 커밋 커버용으로 유지. 이로써 claude/codex `git-commit-message` SKILL.md는 byte 동일이 됨.
 - **load-handoff 자기완결화**: skill 독립성 점검 중 발견 — step 2가 `handoff` skill의 `references/handoff-template.md`(외부 skill 파일)를 가리키던 것을 제거하고 표준 handoff 구조(섹션 목록)를 SKILL.md에 직접 서술. claude·codex 동일 적용(짝 결합 의존 해소). 나머지 skill(handoff·make-plan·read-review·review-pr·write-review)은 번들 references가 자기 디렉터리 안에서 해소됨을 확인.
