@@ -21,10 +21,10 @@ Claude `home/settings.json`의 항목 중 Codex에 대응이 없거나 형식이
 Codex에 반영한 방식:
 
 - 언어/응답/도구 사용·git 커밋 규칙 → `codex-config/home/AGENTS.md` (Codex가 로드하는 전역 규칙은 이 단일 파일).
-- 커스텀 skill → `codex-config/home/skills/`.
+- 커스텀 skill 원본 → `codex-config/home/skills/`, sync 대상 → `~/.agents/skills/`.
 - 공통 Codex config 값(예: attribution·feature 기본값) → `codex-config/home/config.toml` baseline.
 - model·reasoning effort·project trust 같은 머신 종속 override → `codex-config/local/config.override.toml` 또는 기존 `~/.codex/config.toml`. sync는 현재 `~/.codex/config.toml` + baseline + override를 merge해서 같은 키는 교체하고 없는 키는 추가하며, repo가 모르는 기존 키는 보존한다.
 
 ## Skill 변환 규칙
 
-skill을 Claude ↔ Codex로 옮길 때의 형식·도구명·경로 변환 규칙은 [codex-config/skill-authoring.md](../codex-config/skill-authoring.md) 참고.
+skill을 Claude ↔ Codex로 옮길 때의 형식·도구명·경로 변환 규칙은 [codex-config/skill-authoring.md](../codex-config/skill-authoring.md) 참고. 특히 명시 호출 전용 설정은 Claude `SKILL.md`의 `disable-model-invocation: true`를 Codex `agents/openai.yaml`의 `policy.allow_implicit_invocation: false`로 변환한다.

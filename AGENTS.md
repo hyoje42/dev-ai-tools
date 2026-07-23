@@ -6,10 +6,10 @@ For the repo overview and setup, see [README.md](./README.md). This document hol
 
 ## Submodules
 
-Each submodule follows the same broad pattern: **`home/` is the sync input for `~/.<tool>/`.** Most paths mirror verbatim, but tool-specific config files may be merged instead of copied (currently Claude `settings.json` and Codex `config.toml`). Other root files (README, AGENTS, sync scripts, etc.) are for managing the repo and are not synced.
+Each submodule follows the same broad pattern: **`home/` is the tracked sync input.** Most paths mirror the tool home verbatim, but tool-specific targets may be merged or mapped separately (currently Claude `settings.json`, Codex `config.toml`, and Codex skills). Other root files (README, AGENTS, sync scripts, etc.) are for managing the repo and are not synced.
 
 - **[claude-config/](./claude-config)** — `home/` syncs to `~/.claude/`.
-- **[codex-config/](./codex-config)** — `home/` syncs to `~/.codex/`.
+- **[codex-config/](./codex-config)** — `home/skills/` syncs to `~/.agents/skills/`; the rest of `home/` syncs to `~/.codex/`, with `config.toml` merged.
 
 **Machine-specific settings** stay out of tracked sync payloads. Each submodule's `local/` commits only `*.example` templates and ignores real values; Codex also preserves unrelated existing keys in `~/.codex/config.toml` during merge. The application mechanism differs per tool (Claude = settings deep-merge, Codex = TOML config merge plus separate runtime wrapper handling). **Do not port one tool's mechanism onto the other without conversion.**
 
@@ -27,9 +27,9 @@ Once the work target is decided, read the matching doc first and follow its guid
 
 ## Work rules
 
-- **Sync gate**: after editing `home/`, go only as far as checking the diff with `*-diff-with-home` and sharing it with the user. **Applying to `~/.<tool>/` (whether via `*-sync-to-home` or a manual copy) happens only when the user explicitly says so.** Do not sync on your own initiative. Codex `home/config.toml` is still a sync input, but it is merged into `~/.codex/config.toml` rather than copied verbatim.
+- **Sync gate**: after editing `home/`, go only as far as checking the diff with `*-diff-with-home` and sharing it with the user. **Applying to a tool's home targets (whether via `*-sync-to-home` or a manual copy) happens only when the user explicitly says so.** Do not sync on your own initiative. Codex uses both `~/.codex/` and `~/.agents/skills/`; `home/config.toml` is merged into `~/.codex/config.toml` rather than copied verbatim.
 - **Commit order**: commit in the submodule first → then commit the submodule pointer bump in the parent as a separate commit.
-- The two submodules are versioned independently. Do not port a change from one to the other without conversion. When moving rules/skills between tools, always convert the tool-name and path differences (`.claude` ↔ `.codex`, Claude-only tool names, etc.) — see [codex-config/skill-authoring.md](./codex-config/skill-authoring.md) for the conversion rules.
+- The two submodules are versioned independently. Do not port a change from one to the other without conversion. When moving rules/skills between tools, always convert tool names, skill install paths (`~/.claude/skills` ↔ `~/.agents/skills`), and tool-specific capabilities — see [codex-config/skill-authoring.md](./codex-config/skill-authoring.md) for the conversion rules.
 
 ## Remotes (mirroring to multiple remotes)
 

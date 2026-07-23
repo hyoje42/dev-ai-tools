@@ -3,35 +3,212 @@
 # Compare skill pairs between claude-config/home and codex-config/home.
 # (Codex rules were consolidated into AGENTS.md on 2026-06-23 and are no longer
 #  file-paired across tools, so only skills are compared here.)
-# Output is informational: DIFFERS is not an error — intentional transforms exist.
-# Every DIFFERS item must have a documented reason in docs/skill-sync-status.md.
+# Expected DIFFERS entries are intentional tool-specific transforms. Their
+# non-policy files must become identical after normalizing self/other tool
+# names, author prefixes, home paths, and invocation syntax. Any semantic drift,
+# untracked skill, missing pair, unexpected status, missing policy, or missing
+# documentation row is a validation failure.
 
 set -euo pipefail
 
 ROOT="$(cd "$(dirname "$0")" && pwd)"
 CLAUDE_SKILLS="$ROOT/claude-config/home/skills"
 CODEX_SKILLS="$ROOT/codex-config/home/skills"
+SYNC_DOC="$ROOT/docs/skill-sync-status.md"
+
+EXPECTED_IDENTICAL="git-commit-message"
+EXPECTED_DIFFERS="handoff load-handoff make-plan read-review review-pr write-review"
+EXPLICIT_ONLY="make-plan read-review write-review"
+failures=0
+
+contains_word() {
+    local needle="$1" words="$2" word
+    for word in $words; do
+        if [ "$word" = "$needle" ]; then
+            return 0
+        fi
+    done
+    return 1
+}
+
+expected_status() {
+    local name="$1"
+    if contains_word "$name" "$EXPECTED_IDENTICAL"; then
+        printf 'IDENTICAL\n'
+    elif contains_word "$name" "$EXPECTED_DIFFERS"; then
+        printf 'DIFFERS\n'
+    else
+        printf 'UNTRACKED\n'
+    fi
+}
 
 compare() {
-    local label="$1" a="$2" b="$3"
+    local name="$1" label="skills/$1" a="$2" b="$3" actual expected
     if [ ! -e "$a" ]; then
-        printf 'ONLY-CODEX   %s\n' "$label"
+        actual="ONLY-CODEX"
     elif [ ! -e "$b" ]; then
-        printf 'ONLY-CLAUDE  %s\n' "$label"
+        actual="ONLY-CLAUDE"
     elif diff -rq "$a" "$b" > /dev/null 2>&1; then
-        printf 'IDENTICAL    %s\n' "$label"
+        actual="IDENTICAL"
     else
-        printf 'DIFFERS      %s\n' "$label"
+        actual="DIFFERS"
+    fi
+
+    expected="$(expected_status "$name")"
+    printf '%-13s %s (expected: %s)\n' "$actual" "$label" "$expected"
+
+    if [ "$actual" = "DIFFERS" ]; then
         { diff -rq "$a" "$b" 2>/dev/null || true; } | sed 's/^/             /'
     fi
+
+    if [ "$expected" = "UNTRACKED" ] || [ "$actual" != "$expected" ]; then
+        printf 'ERROR: unexpected sync status for %s\n' "$label" >&2
+        failures=$((failures + 1))
+    fi
+
+    if ! grep -Fq "| $name |" "$SYNC_DOC"; then
+        printf 'ERROR: %s has no row in docs/skill-sync-status.md\n' "$label" >&2
+        failures=$((failures + 1))
+    fi
+}
+
+normalize_skill_file() {
+    local side="$1" name="$2" file="$3"
+
+    if [ "$side" = "claude" ]; then
+        if contains_word "$name" "$EXPLICIT_ONLY"; then
+            sed '/^disable-model-invocation: true$/d' "$file"
+        else
+            sed -n 'p' "$file"
+        fi | sed -E \
+            -e 's#/load_handoff#load-handoff#g' \
+            -e 's#/(make-plan|read-review|review-pr|write-review)#\1#g' \
+            -e 's/Slash command/Invocation command/g' \
+            -e 's/Claude/SELF_TOOL/g' \
+            -e 's/Codex/OTHER_TOOL/g' \
+            -e 's/claude/self-tool/g' \
+            -e 's/codex/other-tool/g' \
+            -e '/^#/ s/[[:space:]]+/ /g'
+    else
+        sed -E \
+            -e 's/\$(load-handoff|make-plan|read-review|review-pr|write-review)/\1/g' \
+            -e 's/Skill command/Invocation command/g' \
+            -e 's/Codex/SELF_TOOL/g' \
+            -e 's/Claude/OTHER_TOOL/g' \
+            -e 's/codex/self-tool/g' \
+            -e 's/claude/other-tool/g' \
+            -e '/^#/ s/[[:space:]]+/ /g' \
+            "$file"
+    fi
+}
+
+list_semantic_files() {
+    local side="$1" name="$2" dir="$3"
+    if [ "$side" = "codex" ] && contains_word "$name" "$EXPLICIT_ONLY"; then
+        find "$dir" -type f ! -path "$dir/agents/openai.yaml" -printf '%P\n' | sort
+    else
+        find "$dir" -type f -printf '%P\n' | sort
+    fi
+}
+
+validate_semantic_pairs() {
+    local name claude_dir codex_dir file_diff rel skill_failures
+    echo ""
+    echo "== Normalized skill semantics =="
+
+    for name in $EXPECTED_DIFFERS; do
+        claude_dir="$CLAUDE_SKILLS/$name"
+        codex_dir="$CODEX_SKILLS/$name"
+        skill_failures=0
+
+        if [ ! -d "$claude_dir" ] || [ ! -d "$codex_dir" ]; then
+            continue
+        fi
+
+        file_diff="$(
+            diff -u \
+                <(list_semantic_files claude "$name" "$claude_dir") \
+                <(list_semantic_files codex "$name" "$codex_dir") ||
+                true
+        )"
+        if [ -n "$file_diff" ]; then
+            printf 'ERROR: skills/%s has mismatched non-policy files\n' "$name" >&2
+            printf '%s\n' "$file_diff" | sed 's/^/             /'
+            failures=$((failures + 1))
+            skill_failures=$((skill_failures + 1))
+            continue
+        fi
+
+        while IFS= read -r rel; do
+            [ -n "$rel" ] || continue
+            if ! diff -q \
+                <(normalize_skill_file claude "$name" "$claude_dir/$rel") \
+                <(normalize_skill_file codex "$name" "$codex_dir/$rel") \
+                > /dev/null; then
+                printf 'ERROR: semantic drift in skills/%s/%s\n' "$name" "$rel" >&2
+                {
+                    diff -u \
+                        <(normalize_skill_file claude "$name" "$claude_dir/$rel") \
+                        <(normalize_skill_file codex "$name" "$codex_dir/$rel") ||
+                        true
+                } | sed 's/^/             /'
+                failures=$((failures + 1))
+                skill_failures=$((skill_failures + 1))
+            fi
+        done < <(list_semantic_files claude "$name" "$claude_dir")
+
+        if [ "$skill_failures" -eq 0 ]; then
+            printf 'OK            skills/%s\n' "$name"
+        fi
+    done
+}
+
+validate_explicit_only() {
+    local name claude_skill codex_policy
+    echo ""
+    echo "== Explicit-invocation-only policies =="
+
+    for name in $EXPLICIT_ONLY; do
+        claude_skill="$CLAUDE_SKILLS/$name/SKILL.md"
+        codex_policy="$CODEX_SKILLS/$name/agents/openai.yaml"
+
+        if awk '
+            NR == 1 { next }
+            /^---$/ { exit }
+            $0 == "disable-model-invocation: true" { found = 1 }
+            END { exit(found ? 0 : 1) }
+        ' "$claude_skill"; then
+            printf 'OK            Claude skills/%s\n' "$name"
+        else
+            printf 'ERROR: Claude skills/%s lacks disable-model-invocation: true\n' "$name" >&2
+            failures=$((failures + 1))
+        fi
+
+        if [ -f "$codex_policy" ] &&
+           grep -Fxq 'policy:' "$codex_policy" &&
+           grep -Fxq '  allow_implicit_invocation: false' "$codex_policy"; then
+            printf 'OK            Codex  skills/%s\n' "$name"
+        else
+            printf 'ERROR: Codex skills/%s lacks agents/openai.yaml explicit-only policy\n' "$name" >&2
+            failures=$((failures + 1))
+        fi
+    done
 }
 
 echo "== Skills: claude-config/home/skills <-> codex-config/home/skills =="
 for name in $( { ls -1 "$CLAUDE_SKILLS" 2>/dev/null; ls -1 "$CODEX_SKILLS" 2>/dev/null; } | sort -u ); do
-    compare "skills/$name" "$CLAUDE_SKILLS/$name" "$CODEX_SKILLS/$name"
+    compare "$name" "$CLAUDE_SKILLS/$name" "$CODEX_SKILLS/$name"
 done
 
+validate_semantic_pairs
+validate_explicit_only
+
 echo ""
-echo "Note: DIFFERS items must be justified in docs/skill-sync-status.md."
+if [ "$failures" -ne 0 ]; then
+    printf 'Validation failed: %d issue(s).\n' "$failures" >&2
+    exit 1
+fi
+
+echo "Validation passed."
 echo "Note: Rules are not auto-compared (Codex consolidated them into home/AGENTS.md)."
 echo "      Manually verify codex home/AGENTS.md sections <-> claude home/rules/*.md."
