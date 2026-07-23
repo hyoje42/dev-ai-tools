@@ -2,7 +2,7 @@
 
 `claude-config/home/`과 `codex-config/home/`의 같은 항목(skill·rule)이 어떤 상태인지 항목별로 기록한다. 각 항목에 대해 (1) 두 도구 버전이 **동일/변환/재작성** 중 무엇인지, (2) 변환됐다면 **무엇이·왜** 다른지, (3) **검증 상태**를 남긴다.
 
-**기계 검증**: repo 루트의 `./check-sync-status`가 모든 skill 쌍을 비교해 IDENTICAL / DIFFERS / 한쪽에만 존재를 보고한다(rule은 2026-06-23 통합으로 비교 대상에서 제외 — 아래 'Rules' 참고). "동일" 주장의 byte 동일성은 이 스크립트로 검증하고, 이 문서는 **DIFFERS 항목의 사유 기록**에 집중한다. DIFFERS인데 이 문서에 사유가 없으면 드리프트로 간주한다.
+**기계 검증**: repo 루트의 `./check-sync-status`가 모든 skill 쌍을 비교한다(rule은 2026-06-23 통합으로 비교 대상에서 제외 — 아래 'Rules' 참고). IDENTICAL 항목은 byte 단위 동일성을, DIFFERS 항목은 self/other 도구 명칭·작성자 prefix·홈 경로·호출 문법을 정규화한 뒤 non-policy 파일의 semantic 동일성을 검증한다. Claude frontmatter와 Codex `agents/openai.yaml`의 명시 호출 전용 정책은 별도로 확인한다. 한쪽에만 존재하거나 아래 표에 등록되지 않은 skill, 예상 상태 불일치, 정규화 후 semantic drift, 명시 호출 정책 누락이 있으면 실패한다. 이 문서는 **DIFFERS 항목의 변환 사유 기록**에 집중한다.
 
 새로 점검하거나 항목이 바뀌면 이 표와 "검증 이력"을 갱신한다.
 
@@ -30,13 +30,13 @@
 
 | Skill | 차이 유형 | 차이 내용 / 사유 | 검증 | 최종 점검 |
 |---|---|---|---|---|
-| git-commit-message | 동일 | **자기완결형**: 커밋 형식·언어·승인 규칙을 SKILL.md에 직접 인라인(전역 규칙과 의도적 중복 — 독립성 우선). 워크플로·한국어 응답 템플릿 포함, claude/codex byte 동일 | ✅ | 2026-07-03 |
-| handoff | 변환 | 도구 명칭("Claude/Codex instance"), 작성자 prefix `claude-handoff-`↔`codex-handoff-`, 전역 경로 `~/.claude`↔`~/.codex`. `SKILL.md` + `references/handoff-template.md` 구성 | ✅ | 2026-07-03 |
-| load-handoff | 변환 | handoff와 같은 계열: 작성자 prefix·도구 명칭 치환(교차 agent 예시는 반대 prefix), 호출 예시 `/load_handoff`↔`$load-handoff` | ✅ | 2026-07-03 |
-| make-plan | 변환 | 플랜 파일 prefix `claude-plan-`↔`codex-plan-`, 세션 명칭, 호출 표기 `/make-plan`↔`$make-plan`. 2026-06-04 드리프트 2건과 2026-07-03 Codex 예시 문구 수정(아래 메모) | ✅ | 2026-07-03 |
-| read-review | 변환 | peer review 응답자 prefix `claude-response-`↔`codex-response-`, Author 메타데이터, 예시 review 파일 prefix와 호출 표기 `/read-review`↔`$read-review`만 도구별로 치환. "검토만 하고 수정 금지", side-effect-free verification, response file 기록 의도는 동일 | ✅ | 2026-07-03 |
-| review-pr | 변환 | 본문 workflow와 `references/` 4종은 tool-neutral이고 references는 byte 동일. `SKILL.md`의 호출 표기만 Claude slash command(`/review-pr`) ↔ Codex skill command(`$review-pr`)로 다름 | ✅ | 2026-07-03 |
-| write-review | 변환 | peer review 작성자 prefix `claude-review-`↔`codex-review-`, Reviewer 메타데이터, 전역 경로 `~/.claude`↔`~/.codex`, 호출 표기 `/write-review`·`/read-review`↔`$write-review`·`$read-review`만 치환. 독립 리뷰, 기존 `.reviews/` 격리, review file만 생성하는 경계는 동일 | ✅ | 2026-07-03 |
+| git-commit-message | 동일 | **자기완결형**: 커밋 형식·언어·승인 규칙을 SKILL.md에 직접 인라인(전역 규칙과 의도적 중복 — 독립성 우선). 워크플로·한국어 응답 템플릿 포함, claude/codex byte 동일 | ✅ | 2026-07-23 |
+| handoff | 변환 | 복구 계약과 template 의미는 동일. 도구 명칭("Claude/Codex instance"), 작성자 prefix `claude-handoff-`↔`codex-handoff-`, 전역 경로 `~/.claude`↔`~/.codex`만 변환. 원 세션 없이도 사용자 의도·결정 근거·검증 상태·불확실성·승인 경계·다음 행동을 복구하는 자기완결형 handoff | ✅ | 2026-07-24 |
+| load-handoff | 변환 | 복원·drift 검증·resume 권한 계약은 동일. 작성자 prefix·도구 명칭 치환(교차 agent 예시는 반대 prefix), 호출 예시 `/load_handoff`↔`$load-handoff`만 변환 | ✅ | 2026-07-24 |
+| make-plan | 변환 | 플랜 파일 prefix `claude-plan-`↔`codex-plan-`, 세션 명칭, 호출 표기 `/make-plan`↔`$make-plan`. 명시 호출 전용 정책은 Claude frontmatter ↔ Codex `agents/openai.yaml`로 변환 | ✅ | 2026-07-23 |
+| read-review | 변환 | peer review 응답자 prefix `claude-response-`↔`codex-response-`, Author 메타데이터, 예시 review 파일 prefix와 호출 표기 `/read-review`↔`$read-review`. 명시 호출 전용 정책은 Claude frontmatter ↔ Codex `agents/openai.yaml`로 변환 | ✅ | 2026-07-23 |
+| review-pr | 변환 | 본문 workflow는 tool-neutral이고 `SKILL.md`의 호출 표기만 `/review-pr`↔`$review-pr`로 다름. `references/` 4종은 byte 동일하며, 생략한 base는 upstream tracking branch가 아니라 remote default branch에서 해석 | ✅ | 2026-07-23 |
+| write-review | 변환 | peer review 작성자 prefix `claude-review-`↔`codex-review-`, Reviewer 메타데이터, 전역 경로 `~/.claude`↔`~/.codex`, 호출 표기 `/write-review`·`/read-review`↔`$write-review`·`$read-review`. 명시 호출 전용 정책은 Claude frontmatter ↔ Codex `agents/openai.yaml`로 변환 | ✅ | 2026-07-23 |
 
 ## Rules
 
@@ -56,11 +56,13 @@
 
 ## 항목별 메모
 
-### handoff / load-handoff — 2026-06-12 재설계
+### handoff / load-handoff — 2026-06-12 재설계 / 2026-07-24 복구 계약 보강
 
 - 저장 경로를 도구별 `.claude/handoffs/` ↔ `.codex/handoffs/`에서 **공유 `.handoffs/` + 작성자 prefix**(`claude-handoff-*` / `codex-handoff-*`)로 통일. make-plan의 cross-agent 방식과 일관되며, 한 도구가 남긴 handoff를 다른 도구가 자연스럽게 발견할 수 있다.
 - handoff 템플릿을 `references/handoff-template.md`로 분리하고, 템플릿을 반복하던 Real Example(~100줄)과 중복 bash 절차를 제거 (289줄 → ~50줄).
 - load-handoff에 "handoff 내용을 현재 코드와 대조 검증" 단계 추가 (make-plan의 검증 규칙과 같은 정신).
+- 2026-07-24에는 handoff를 단순 대화 요약이 아니라 **원 세션 없이도 복구 가능한 자기완결형 컨텍스트**로 보강했다. 사용자 목표·성공 기준·명시 제약, 결정과 기각안의 근거, 작성 시점의 branch/`HEAD`/worktree와 검증 결과, session-only context, 사실·추론·미결 질문, 승인 경계, 다음 행동의 성공·중단 조건을 구분해 기록한다. 임의의 줄 수보다 복구 가능성을 우선한다.
+- load-handoff도 같은 구조를 복원하고 기록 상태와 live state의 drift를 구분한다. 단순 load/inspect 요청은 실행 전에 대기하지만, 명시적인 resume/continue 요청은 handoff 범위 안의 안전한 다음 행동을 승인한 것으로 해석하되 기록된 approval gate와 stop condition은 계속 지킨다.
 
 ### git-commit-guidelines(rule) + git-commit-message(skill) — 역할 분리
 
@@ -85,7 +87,24 @@
 
 2026-07-03 재점검에서 Codex 쪽 "other agents" 설명문이 `codex-plan.md`를 예시로 들어 자기 prefix를 다른 agent 예시처럼 보이게 하던 문구를 발견했다. → Claude 문장 구조를 유지하되 Codex 기준의 다른 agent 예시(`claude-plan.md`, `cursor-plan.md`)만 남겨 대칭을 맞췄다.
 
+2026-07-23에는 `make-plan`·`read-review`·`write-review`의 명시 호출 전용 여부를 description 문구에 의존하지 않고 제품별 정책으로 강제했다. Claude는 `SKILL.md` frontmatter의 `disable-model-invocation: true`, Codex는 `agents/openai.yaml`의 `policy.allow_implicit_invocation: false`를 사용한다.
+
 ## 검증 이력
+
+### 2026-07-24 — handoff 복구 계약 정렬 · semantic drift gate 추가
+
+- Codex에 먼저 보강한 `handoff`·`load-handoff`의 복구 계약을 Claude 형식으로 이식했다. 본문과 template 의미는 같고, 작성자 prefix·도구명·홈 경로·호출 문법만 제품별로 다르다.
+- `check-sync-status`가 DIFFERS 항목을 단순히 "서로 다름"으로만 판정하던 사각지대를 제거했다. 이제 `agents/` 정책 파일을 제외한 파일 목록을 맞춘 뒤 self/other 도구 명칭, 작성자 prefix, 홈 경로, slash/`$` 호출 문법을 정규화해 본문·reference의 semantic 동일성을 검사한다.
+- `make-plan`의 작성자명 길이에 따른 주석 정렬 공백은 의미 없는 차이로 정규화한다. Claude `disable-model-invocation: true`와 Codex `agents/openai.yaml`은 기존 전용 검사에서 계속 확인한다.
+- 전체 7개 skill을 재검증했다. `git-commit-message`는 byte-identical이고, 나머지 6개는 문서화된 변환 후 semantic match이며 한쪽에만 존재하거나 깨진 reference는 없다.
+
+### 2026-07-23 — 명시 호출 정책 강제 · review base 수정 · 검증 gate 강화
+
+- `make-plan`·`read-review`·`write-review`에 제품별 명시 호출 전용 정책을 추가하고, 같은 원칙을 각 submodule의 `AGENTS.md`와 `codex-config/skill-authoring.md`에 기록했다. 자동 호출을 막기 위해 description 문구를 반복하던 부분은 제거했다.
+- `review-pr`에서 base를 생략할 때 feature branch의 upstream tracking ref를 base로 잘못 사용할 수 있던 규칙을 수정했다. 이제 대상 branch의 remote가 광고하는 default branch를 우선하며, 없으면 다른 명확한 remote default와 local `main`/`master`/`develop` 순서로 해석한다.
+- [Codex 공식 loader](https://github.com/openai/codex/blob/main/codex-rs/core-skills/src/loader.rs)가 `$CODEX_HOME/skills`를 하위 호환용 deprecated 경로, `$HOME/.agents/skills`를 user skill 경로로 명시하는 것을 확인해 sync 대상을 `~/.agents/skills/`로 전환했다. repo 원본은 비교 구조를 유지하기 위해 `codex-config/home/skills/`에 둔다. 공유 경로의 다른 skill과 `~/.codex/skills/.system/`은 관리 대상에서 제외한다.
+- `check-sync-status`를 단순 현황 출력에서 검증 gate로 강화했다. 예상 IDENTICAL/DIFFERS 목록, 양쪽 존재 여부, 문서 등록 여부, 명시 호출 정책을 검사하고 드리프트가 있으면 non-zero로 종료한다.
+- 전체 skill 7종을 재검증했다. `git-commit-message`는 IDENTICAL, 나머지 6종은 문서화된 변환에 따른 DIFFERS이며 한쪽에만 존재하는 skill은 없다.
 
 ### 2026-07-03 — skill 호출 표기 변환 반영 및 전 항목 재검증
 
