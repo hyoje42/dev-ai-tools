@@ -34,9 +34,8 @@
 | handoff | 변환 | 복구 계약과 template 의미는 동일. 도구 명칭("Claude/Codex instance"), 작성자 prefix `claude-handoff-`↔`codex-handoff-`, 전역 경로 `~/.claude`↔`~/.codex`만 변환. 원 세션 없이도 사용자 의도·결정 근거·검증 상태·불확실성·승인 경계·다음 행동을 복구하는 자기완결형 handoff | ✅ | 2026-07-24 |
 | load-handoff | 변환 | 복원·drift 검증·resume 권한 계약은 동일. 작성자 prefix·도구 명칭 치환(교차 agent 예시는 반대 prefix), 호출 예시 `/load_handoff`↔`$load-handoff`만 변환 | ✅ | 2026-07-24 |
 | make-plan | 변환 | 플랜 파일 prefix `claude-plan-`↔`codex-plan-`, 세션 명칭, 호출 표기 `/make-plan`↔`$make-plan`. 명시 호출 전용 정책은 Claude frontmatter ↔ Codex `agents/openai.yaml`로 변환 | ✅ | 2026-07-23 |
-| read-review | 변환 | peer review 응답자 prefix `claude-response-`↔`codex-response-`, Author 메타데이터, 예시 review 파일 prefix와 호출 표기 `/read-review`↔`$read-review`. 명시 호출 전용 정책은 Claude frontmatter ↔ Codex `agents/openai.yaml`로 변환 | ✅ | 2026-07-23 |
 | review-pr | 변환 | 본문 workflow는 tool-neutral이고 `SKILL.md`의 호출 표기만 `/review-pr`↔`$review-pr`로 다름. `references/` 4종은 byte 동일하며, 생략한 base는 upstream tracking branch가 아니라 remote default branch에서 해석 | ✅ | 2026-07-23 |
-| write-review | 변환 | peer review 작성자 prefix `claude-review-`↔`codex-review-`, Reviewer 메타데이터, 전역 경로 `~/.claude`↔`~/.codex`, 호출 표기 `/write-review`·`/read-review`↔`$write-review`·`$read-review`. 명시 호출 전용 정책은 Claude frontmatter ↔ Codex `agents/openai.yaml`로 변환 | ✅ | 2026-07-23 |
+| review-independently | 변환 | 범용 독립 검토 workflow는 동일. review 저장을 명시적으로 요청받았을 때의 agent prefix·metadata(`claude-review-`/`claude` ↔ `codex-review-`/`codex`), tool home 경로, 호출 표기(`/review-independently`↔`$review-independently`)만 변환. 명시 호출 전용 정책은 Claude frontmatter ↔ Codex `agents/openai.yaml`로 변환 | ✅ | 2026-08-07 |
 
 ## Rules
 
@@ -53,6 +52,7 @@
 |---|---|---|---|
 | setup-team-agents (skill) | 양쪽 `outdated/skills/`로 이동, sync 제외 | 2026-06-12 | 팀 agent 기능이 도구에 네이티브로 들어오면서 사장. 설계 기록용으로 보관 — 각 submodule `outdated/README.md` 참고 |
 | git-commit-message (skill) | 역할 분리 후 자기완결형으로 재확장 | 2026-06-12 / 2026-06-23 | 2026-06-12에는 형식 규칙을 rule로 분리하고 skill을 호출형 워크플로로 얇게 유지했다. 2026-06-23에는 skill 독립성을 위해 형식·언어·승인 규칙을 SKILL.md에 다시 인라인했다(전역 rule과 의도적 중복). 현재 claude/codex skill은 byte 동일 |
+| write-review / read-review (skills) | `review-independently` 하나로 통합 | 2026-08-07 | review 작성과 response 처리가 실제로는 같은 독립 조사·검토였으므로 분리된 왕복 protocol을 제거. 기본 chat 응답 + 명시적 요청 시에만 저장하는 단일 skill로 대체 |
 
 ## 항목별 메모
 
@@ -72,11 +72,14 @@
 - **skill** (호출 시): staged 변경 우선 분석(없으면 전체 working tree를 보고 유연하게 판단) → 파일별 설명 → 메시지 제안 → 승인 대기 워크플로와 한국어 응답 템플릿. 형식 규칙은 rule을 참조해 중복을 없앴다.
 - **2026-06-23**: ① Codex 전역 규칙을 `rules/dev-tools/`에서 `AGENTS.md`로 통합(`git-commit-guidelines` 포함). ② 이후 `git-commit-message` skill을 **자기완결형**으로 전환 — 형식·언어·승인 규칙을 SKILL.md에 직접 인라인(claude/codex 동일). 전역 규칙(codex `AGENTS.md` / claude `rules/git-commit-guidelines.md`)은 skill 안 거친 **직접 커밋**용으로 유지. skill 단독 사용·전역 설정 상이 케이스를 위해 독립성을 택한 결정이라 **의도적 중복**이며, 두 사본은 수동으로 동기 유지한다.
 
-### write-review / read-review — 2026-06-12 추가
+### review-independently — 2026-08-07 통합
 
-- `write-review`는 다른 agent/session의 산출물을 독립적으로 검토해 `.reviews/` 아래 review file만 남긴다. 코드·문서 수정, state-mutating git command, 기존 `.reviews/` 무단 읽기를 금지한다.
-- `read-review`는 author 쪽 agent가 review file을 읽고 각 finding을 재검증해 accept/dispute/discuss verdict와 response file만 남긴다. 실제 수정은 사용자가 이후 명시적으로 지시할 때만 수행한다.
-- 현재 Claude/Codex 차이는 작성자 prefix(`claude-review-*` / `codex-review-*`, `claude-response-*` / `codex-response-*`), meta author/reviewer 값, 호출 표기(`/write-review`·`/read-review` ↔ `$write-review`·`$read-review`)다. 교차 agent 예시는 의도적으로 반대 prefix를 남긴다.
+- 기존 `write-review`와 `read-review`를 하나의 `review-independently`로 통합했다. 붙여넣은 agent 응답, 파일·문서, code, diff, current changes, 기술 질문, system state, design decision 등 입력 형식과 무관하게 실제 artifact와 source를 기준으로 독립 조사·검증하고 의견을 제시한다.
+- 기본 결과는 chat 응답이다. 사용자가 save, record, document, write 등으로 보존을 명시한 경우에만 `.reviews/YYMMDD-{topic-slug}/{agent}-review-YYYY-MM-DD-HHMMSS.md`를 작성한다. filename prefix와 문서 metadata에 reviewing agent를 모두 기록한다.
+- 저장 review는 원 conversation 없이도 이해할 수 있도록 background, scope, evidence, analysis, conclusion, limitations, open questions를 포함한다. code defect나 operational risk에서 유용할 때만 severity와 `file:line` finding을 사용한다.
+- 기존 review-response 왕복, accept/dispute/discuss 강제, author standpoint, 자동 review file 탐색을 제거했다. 검토 대상 자체를 수정하지 않고 기존 `.reviews/` 내용도 사용자가 지목한 경우에만 읽는다.
+- Codex의 공유 `~/.agents/skills/`에는 repo에서 사라진 이름을 임의 삭제할 수 없으므로, sync script에 이 repo가 관리했던 정확한 퇴역 이름(`read-review`, `write-review`)만 별도 등록했다. diff에서 잔존을 표시하고 sync 시 양쪽 skill 경로를 백업한 뒤 삭제 여부를 묻는다. 다른 공유 skill은 계속 보존한다.
+- 현재 Claude/Codex 차이는 저장 filename prefix·Reviewing agent metadata(`claude` / `codex`), tool home 경로, 호출 표기(`/review-independently` ↔ `$review-independently`)다.
 
 ### make-plan — 2026-06-04 드리프트 2건 수정
 
@@ -90,6 +93,13 @@
 2026-07-23에는 `make-plan`·`read-review`·`write-review`의 명시 호출 전용 여부를 description 문구에 의존하지 않고 제품별 정책으로 강제했다. Claude는 `SKILL.md` frontmatter의 `disable-model-invocation: true`, Codex는 `agents/openai.yaml`의 `policy.allow_implicit_invocation: false`를 사용한다.
 
 ## 검증 이력
+
+### 2026-08-07 — write-review + read-review → review-independently 통합
+
+- 별도 review 작성·응답 단계가 같은 독립 조사·검토 workflow를 중복 표현한다고 판단해 두 skill을 `review-independently` 하나로 대체했다.
+- 모든 입력을 같은 증거 중심 workflow로 검토하고 chat에 응답하되, 사용자가 기록을 명시한 경우에만 날짜·주제·agent가 드러나는 `.reviews/` 경로에 self-contained review를 저장하도록 했다.
+- 양쪽 submodule의 explicit-invocation-only 정책과 tool-specific agent prefix·home path 변환을 유지하고, `check-sync-status`의 예상 skill 목록과 호출 문법 정규화를 최종 이름에 맞췄다.
+- Codex diff/sync가 공유 skill 경로의 다른 항목은 보존하면서 퇴역한 두 이전 이름만 감지·백업·확인 후 정리하도록 migration test를 추가했다.
 
 ### 2026-07-24 — handoff 복구 계약 정렬 · semantic drift gate 추가
 
