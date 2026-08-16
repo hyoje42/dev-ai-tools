@@ -57,12 +57,9 @@ git push origin main && git push upstream main
 
 ## Submodule 업데이트
 
-```bash
-# 각 submodule에서 작업·push 후, 부모에서 포인터 갱신
-git add claude-config codex-config
-git commit -m "chore: bump claude-config and codex-config"
+각 submodule에서 작업·push한 뒤 부모에서 포인터를 갱신한다(위 작업 흐름 4단계). 원격 최신 변경을 가져올 때는 다음을 쓴다.
 
-# 원격 최신 변경을 가져올 때
+```bash
 git submodule update --remote --merge
 ```
 
