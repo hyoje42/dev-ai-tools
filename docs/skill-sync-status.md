@@ -1,6 +1,6 @@
 # 스킬·룰 동기화 검증 현황
 
-`claude-config/home/`과 `codex-config/home/`의 같은 항목(skill·rule)이 어떤 상태인지 항목별로 기록한다. 각 항목에 대해 (1) 두 도구 버전이 **동일/변환/재작성** 중 무엇인지, (2) 변환됐다면 **무엇이·왜** 다른지, (3) **검증 상태**를 남긴다.
+`claude-config/home/`과 `codex-config/home/`의 같은 항목(skill·rule)이 어떤 상태인지 항목별로 기록한다. 각 항목에 대해 (1) 두 도구 버전이 **동일/변환/재작성** 중 무엇인지, (2) 변환됐다면 **무엇이·왜** 다른지, (3) **검증 상태**를 남긴다. 개별 항목에 속하지 않는 **두 submodule 공통의 정합성 결정**(지시 문서의 규칙 귀속 등)은 아래 "검증 이력"에 남긴다.
 
 **기계 검증**: repo 루트의 `./check-sync-status`가 모든 skill 쌍을 비교한다(rule은 2026-06-23 통합으로 비교 대상에서 제외 — 아래 'Rules' 참고). IDENTICAL 항목은 byte 단위 동일성을, DIFFERS 항목은 self/other 도구 명칭·작성자 prefix·홈 경로·호출 문법을 정규화한 뒤 non-policy 파일의 semantic 동일성을 검증한다. Claude frontmatter와 Codex `agents/openai.yaml`의 명시 호출 전용 정책은 별도로 확인한다. 한쪽에만 존재하거나 아래 표에 등록되지 않은 skill, 예상 상태 불일치, 정규화 후 semantic drift, 명시 호출 정책 누락이 있으면 실패한다. 이 문서는 **DIFFERS 항목의 변환 사유 기록**에 집중한다.
 
@@ -93,6 +93,14 @@
 2026-07-23에는 `make-plan`·`read-review`·`write-review`의 명시 호출 전용 여부를 description 문구에 의존하지 않고 제품별 정책으로 강제했다. Claude는 `SKILL.md` frontmatter의 `disable-model-invocation: true`, Codex는 `agents/openai.yaml`의 `policy.allow_implicit_invocation: false`를 사용한다.
 
 ## 검증 이력
+
+### 2026-08-16 — submodule 지시 문서에서 부모 전용 규칙 분리
+
+- 두 submodule `AGENTS.md`의 서두를 "A submodule of `dev-ai-tools`"에서 "standalone repo이며 메타 repo의 submodule로도 임베드될 수 있다"로 바꿨다. 각 repo는 단독 clone으로도 사용되므로, 지시 문서가 특정 부모 repo의 존재를 전제하지 않게 했다.
+- 양쪽 `AGENTS.md`에서 **Commit order**(submodule 먼저 → 부모 포인터 bump) 규칙을 제거했다. 이 규칙은 부모가 있을 때만 성립하는 오케스트레이션이며, canonical 위치는 부모 `AGENTS.md`의 work rules와 `README.md`의 작업 흐름이다. 두 submodule에 대칭 적용했으므로 도구 간 드리프트가 아니다.
+- codex `skill-authoring.md`의 "동기화 검증" 섹션(부모 루트 `check-sync-status` 사용법 설명)을 제거했다. submodule 문서가 부모 repo에만 존재하는 스크립트를 가리키면 단독 clone에서 깨진 참조가 된다. 해당 설명의 canonical 위치는 부모 `README.md`와 이 문서의 "기계 검증" 문단이다. Claude 쪽에는 대응 섹션이 없어 제거 대상이 없었다(비대칭이 아니라 원래 없던 항목).
+- 부모 `AGENTS.md`의 cross-submodule commit gate에 **변환 사유를 이 문서에 기록**하라는 요구를 추가했다. 기존에는 codex `skill-authoring.md`에만 적혀 있어, 위 제거로 요구가 사라지는 것을 막기 위해 부모로 올렸다.
+- `home/` 하위는 건드리지 않았으므로 skill 표의 상태·최종 점검일은 변동 없다. `./check-sync-status`도 그대로 통과한다.
 
 ### 2026-08-07 — write-review + read-review → review-independently 통합
 

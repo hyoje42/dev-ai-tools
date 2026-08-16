@@ -60,7 +60,7 @@ git push origin main && git push upstream main
 ```bash
 # 각 submodule에서 작업·push 후, 부모에서 포인터 갱신
 git add claude-config codex-config
-git commit -m "update submodules"
+git commit -m "chore: bump claude-config and codex-config"
 
 # 원격 최신 변경을 가져올 때
 git submodule update --remote --merge
@@ -74,6 +74,6 @@ git submodule update --remote --merge
 
 ## 관련 문서
 
-- [docs/skill-sync-status.md](./docs/skill-sync-status.md) — skill이 두 도구(Claude/Codex) 간 동일한지·도구 차이로 변환됐는지·검증됐는지, 그리고 rule의 도구 간 배치(claude `home/rules/` ↔ codex `home/AGENTS.md`)를 기록한 동기화 현황.
+- [docs/skill-sync-status.md](./docs/skill-sync-status.md) — skill이 두 도구(Claude/Codex) 간 동일한지·도구 차이로 변환됐는지·검증됐는지, 그리고 rule의 도구 간 배치(claude `home/rules/` ↔ codex `home/AGENTS.md`)를 기록한 동기화 현황. 개별 항목에 속하지 않는 두 submodule 공통의 정합성 결정(지시 문서의 규칙 귀속 등)도 "검증 이력"에 남긴다.
 - [docs/codex-config-from-claude.md](./docs/codex-config-from-claude.md) — codex-config가 claude-config에서 무엇을 가져오고/제외했는지와 설정·skill 변환 정책(두 submodule 관계는 부모에서 설명).
 - `./check-sync-status` — 두 submodule의 skill 쌍을 기계 비교한다. IDENTICAL 항목은 byte 동일성, DIFFERS 항목은 도구명·prefix·홈 경로·호출 문법을 정규화한 semantic 동일성을 검증하며 한쪽 누락과 명시 호출 정책 누락도 실패 처리한다. 규칙은 도구별 위치가 달라(claude `home/rules/` ↔ codex `home/AGENTS.md`) 비교 대상이 아니다.
