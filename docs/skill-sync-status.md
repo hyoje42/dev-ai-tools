@@ -39,12 +39,12 @@
 
 ## Rules
 
-2026-06-23부로 **Codex 전역 규칙을 `home/AGENTS.md`로 통합**하고 `home/rules/dev-tools/`를 제거했다(아래 검증 이력 참고). 따라서 rule은 더 이상 도구 간 파일 단위로 짝지어지지 않는다:
+2026-06-23부로 Codex의 작업 규칙을 `home/AGENTS.md`로 통합하고 `home/rules/dev-tools/`를 제거했다. 2026-08-20에는 언어 선택과 한국어 문체의 역할을 분리했다(아래 검증 이력 참고). 따라서 rule/config는 더 이상 도구 간 파일 단위로 짝지어지지 않는다:
 
-- **Claude**: `home/rules/*.md` 개별 파일 (`~/.claude/rules/`로 auto-load)
-- **Codex**: `home/AGENTS.md` 섹션 (단일 파일만 operative — `~/.codex/rules/`는 지시문으로 로드되지 않음: [agents-md 가이드](https://developers.openai.com/codex/guides/agents-md), [#23788](https://github.com/openai/codex/issues/23788))
+- **Claude**: `home/rules/*.md` 개별 작업 규칙 + `home/output-styles/fluent-korean.md` 한국어 문체 (`~/.claude/rules/` auto-load + settings의 output style 선택)
+- **Codex**: `home/AGENTS.md`의 언어 선택·작업 규칙 + `home/config.toml`의 `developer_instructions` 한국어 문체 (`~/.codex/rules/`는 지시문으로 로드되지 않음: [agents-md 가이드](https://developers.openai.com/codex/guides/agents-md), [#23788](https://github.com/openai/codex/issues/23788))
 
-`check-sync-status`는 이제 **skills만** 비교한다. rule 내용의 도구 간 정합성은 codex `home/AGENTS.md` ↔ claude `home/rules/`를 사람이 직접 대조한다.
+`check-sync-status`는 계속 **skills만** 비교한다. rule/config 내용의 도구 간 정합성은 Codex의 `home/AGENTS.md`·`developer_instructions`와 Claude의 `home/rules/`·output style을 사람이 직접 대조한다.
 
 ## 퇴역·역할 변경 항목
 
@@ -93,6 +93,14 @@
 2026-07-23에는 `make-plan`·`read-review`·`write-review`의 명시 호출 전용 여부를 description 문구에 의존하지 않고 제품별 정책으로 강제했다. Claude는 `SKILL.md` frontmatter의 `disable-model-invocation: true`, Codex는 `agents/openai.yaml`의 `policy.allow_implicit_invocation: false`를 사용한다.
 
 ## 검증 이력
+
+### 2026-08-20 — 한국어 언어 선택과 문체 계층 분리
+
+- Claude의 `settings.json`에서 `language = korean`과 `outputStyle = fluent-korean`이 별도 역할을 담당하는 구조를 Codex의 실제 instruction 계층에 맞게 변환했다. Codex의 기본 응답 언어는 `home/AGENTS.md`, 선택된 한국어의 형태론·문체 품질은 `home/config.toml`의 `developer_instructions`가 담당한다.
+- Claude output style의 YAML metadata는 옮기지 않고, 한국어 본문과 대조 예시는 보존했다. Codex 쪽에는 출력 언어를 강제하지 않고 사용자 언어 요구·프로젝트별 산출물 관례·코드와 기존 언어를 우선하는 범위 설명을 추가했다.
+- 기술 용어 규칙은 더 구체적인 `developer_instructions`에만 남겨 `home/AGENTS.md`와의 중복을 제거했다. 한국어 형태론과 예시의 정밀도를 위해 부모의 영어 기본 원칙에는 language-specific output style 본문만 허용하는 좁은 예외를 기록했다.
+- Codex `developer_instructions`는 실제 `developer` role에 추가되는 scalar string이라 project/local config가 같은 키를 정의하면 전체 교체된다. Claude의 named output style과 동일한 기능으로 문서화하지 않았으며, tool-specific 계층 차이는 `docs/codex-config-from-claude.md`에 기록했다.
+- `codex-merge-config`의 multiline string round-trip, baseline·override 우선순위, sync 결과 전달을 회귀 테스트로 검증한다. `check-sync-status`는 여전히 skill만 기계 검증하며, 이번 rule/config 변환은 수동 대조 대상으로 유지한다.
 
 ### 2026-08-16 — submodule 지시 문서에서 부모 전용 규칙 분리
 
