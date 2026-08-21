@@ -98,6 +98,15 @@
 
 ## 검증 이력
 
+### 2026-08-21 — status line 세션 비용 표시 정렬
+
+- **범위**: Claude의 `home/settings.json`·`home/statusline-command.sh`와 Codex의 `home/config.toml`을 대조했다.
+- **판단**: Claude는 사용자 명령이 transcript를 읽어 세션 비용을 계산하지만, Codex의 status line은 미리 정의된 항목만 지원한다. 따라서 Claude 구현을 이식하지 않고 Codex 네이티브 `estimated-thread-cost` 항목을 사용한다. 비용 정보가 없는 계정에서는 해당 항목이 자동으로 생략된다.
+- **배치**: 두 도구 모두 세션 토큰 합계 뒤, 사용량 제한 앞에 비용을 표시하도록 맞췄다. Claude는 이미 이 순서였으므로 수정하지 않았고, Codex에만 `estimated-thread-cost`를 추가했다.
+- **비용 출처**: 이어서 Claude의 `home/statusline-command.sh`가 비용을 읽는 위치를 transcript 재계산에서 status JSON의 `cost.total_cost_usd`로 바꿨다. 재계산 방식은 해당 값이 `--resume` 시 0으로 초기화되던 문제(anthropics/claude-code#13088) 때문에 도입했는데, 지금은 그 값이 세션 재개 후에도 유지되고 transcript에 기록되지 않는 호출(ai-title 재생성 등)까지 포함하므로, 재계산 결과가 약 10% 낮게 측정된다. transcript 합계는 JSON이 값을 보고하지 않을 때만 쓰이는 대체 경로로 남기고 `(!)` 표시를 덧붙였다.
+- **이식 여부**: 이 변경은 Codex에 이식하지 않는다. Codex는 네이티브 `estimated-thread-cost` 항목이 비용을 자체적으로 산출하므로, 어떤 출처를 신뢰할지 선택하는 문제 자체가 발생하지 않는다.
+- **검증**: `./check-sync-status`, `git diff --check`, `codex-diff-with-home`을 통과했으며, Codex 홈 대상에는 `config.toml` 변경 한 건만 예정돼 있다.
+
 ### 2026-08-21 — review-independently 전달 가능성·외부 근거 보강
 
 - **범위**: `review-independently`의 `SKILL.md` 6개 항목(Boundaries 1건, Workflow 3건, Review Format Rules 2건). `references/review-template.md`는 이미 `Inputs`·`Evidence Reviewed`·`Limitations`로 같은 정보를 요구하고 있어 수정하지 않았다.
