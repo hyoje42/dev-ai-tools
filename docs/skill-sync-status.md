@@ -35,7 +35,7 @@
 | load-handoff | 변환 | 복원·drift 검증·resume 권한 계약은 동일. 작성자 prefix·도구 명칭 치환(교차 agent 예시는 반대 prefix), 호출 예시 `/load_handoff`↔`$load-handoff`만 변환 | ✅ | 2026-07-24 |
 | make-plan | 변환 | 플랜 파일 prefix `claude-plan-`↔`codex-plan-`, 세션 명칭, 호출 표기 `/make-plan`↔`$make-plan`. 명시 호출 전용 정책은 Claude frontmatter ↔ Codex `agents/openai.yaml`로 변환 | ✅ | 2026-07-23 |
 | review-pr | 변환 | 본문 workflow는 tool-neutral이고 `SKILL.md`의 호출 표기만 `/review-pr`↔`$review-pr`로 다름. `references/` 4종은 byte 동일하며, 생략한 base는 upstream tracking branch가 아니라 remote default branch에서 해석 | ✅ | 2026-07-23 |
-| review-independently | 변환 | 범용 독립 검토 workflow는 동일. review 저장을 명시적으로 요청받았을 때의 agent prefix·metadata(`claude-review-`/`claude` ↔ `codex-review-`/`codex`), tool home 경로, 호출 표기(`/review-independently`↔`$review-independently`)만 변환. 명시 호출 전용 정책은 Claude frontmatter ↔ Codex `agents/openai.yaml`로 변환 | ✅ | 2026-08-07 |
+| review-independently | 변환 | 범용 독립 검토 workflow는 동일. review 저장을 명시적으로 요청받았을 때의 agent prefix·metadata(`claude-review-`/`claude` ↔ `codex-review-`/`codex`)와 tool home 경로만 변환. 본문에 호출 표기가 없어 그 항목은 차이에 해당하지 않는다. 명시 호출 전용 정책은 Claude frontmatter ↔ Codex `agents/openai.yaml`로 변환 | ✅ | 2026-08-21 |
 
 ## Rules
 
@@ -72,14 +72,18 @@
 - **skill** (호출 시): staged 변경 우선 분석(없으면 전체 working tree를 보고 유연하게 판단) → 파일별 설명 → 메시지 제안 → 승인 대기 워크플로와 한국어 응답 템플릿. 형식 규칙은 rule을 참조해 중복을 없앴다.
 - **2026-06-23**: ① Codex 전역 규칙을 `rules/dev-tools/`에서 `AGENTS.md`로 통합(`git-commit-guidelines` 포함). ② 이후 `git-commit-message` skill을 **자기완결형**으로 전환 — 형식·언어·승인 규칙을 SKILL.md에 직접 인라인(claude/codex 동일). 전역 규칙(codex `AGENTS.md` / claude `rules/git-commit-guidelines.md`)은 skill 안 거친 **직접 커밋**용으로 유지. skill 단독 사용·전역 설정 상이 케이스를 위해 독립성을 택한 결정이라 **의도적 중복**이며, 두 사본은 수동으로 동기 유지한다.
 
-### review-independently — 2026-08-07 통합
+### review-independently — 2026-08-07 통합 / 2026-08-21 전달 가능성 보강
 
 - 기존 `write-review`와 `read-review`를 하나의 `review-independently`로 통합했다. 붙여넣은 agent 응답, 파일·문서, code, diff, current changes, 기술 질문, system state, design decision 등 입력 형식과 무관하게 실제 artifact와 source를 기준으로 독립 조사·검증하고 의견을 제시한다.
 - 기본 결과는 chat 응답이다. 사용자가 save, record, document, write 등으로 보존을 명시한 경우에만 `.reviews/YYMMDD-{topic-slug}/{agent}-review-YYYY-MM-DD-HHMMSS.md`를 작성한다. filename prefix와 문서 metadata에 reviewing agent를 모두 기록한다.
 - 저장 review는 원 conversation 없이도 이해할 수 있도록 background, scope, evidence, analysis, conclusion, limitations, open questions를 포함한다. code defect나 operational risk에서 유용할 때만 severity와 `file:line` finding을 사용한다.
 - 기존 review-response 왕복, accept/dispute/discuss 강제, author standpoint, 자동 review file 탐색을 제거했다. 검토 대상 자체를 수정하지 않고 기존 `.reviews/` 내용도 사용자가 지목한 경우에만 읽는다.
 - Codex의 공유 `~/.agents/skills/`에는 repo에서 사라진 이름을 임의 삭제할 수 없으므로, sync script에 이 repo가 관리했던 정확한 퇴역 이름(`read-review`, `write-review`)만 별도 등록했다. diff에서 잔존을 표시하고 sync 시 양쪽 skill 경로를 백업한 뒤 삭제 여부를 묻는다. 다른 공유 skill은 계속 보존한다.
-- 현재 Claude/Codex 차이는 저장 filename prefix·Reviewing agent metadata(`claude` / `codex`), tool home 경로, 호출 표기(`/review-independently` ↔ `$review-independently`)다.
+- 2026-08-21에 전달 가능성을 보강했다. 이 skill의 chat 출력을 그대로 복사해 다른 agent에게 넘기고 "이 agent는 이렇게 판단했다, 계획이나 구현을 조정할지 검토하라"고 요청하는 것이 실제 주 용도임을 확인했다. 자기완결성 요구가 저장 review에만 있고 chat 응답에는 없던 공백을 메웠다.
+- chat 응답은 조사 범위(확인했으나 문제가 없던 자료와 참고한 외부 source 포함)를 서술하고, 세션 밖으로 복사해도 성립하도록 "the file above" 같은 세션 의존 지시 대신 대상과 artifact를 명시한다.
+- finding의 지위를 구분한다. 수정이 필요한 사항과 수신자가 판단해 거절할 수 있는 사항을 구별하고, review가 복종을 요구하는 지시가 아니라 판단을 청하는 의견임을 명시한다.
+- 조사·인용 지침의 code 편중을 해소했다. 기존 code 문구는 유지한 채 document·붙여넣은 응답·design decision 갈래를 추가하고, `path:line` 외에 절·인용구·발화 단위로 비파일 대상을 지목할 수 있게 했다. 외부 source 조회는 외부 도구의 현재 동작, version 의존 세부사항, 인용 source의 실제 내용, 변경 가능한 사실에 판단이 걸릴 때의 조건부 의무로 올렸고, `Boundaries`에서 자신의 기억을 evidence 목록에서 배제했다.
+- 현재 Claude/Codex 차이는 저장 filename prefix·Reviewing agent metadata(`claude` / `codex`)와 tool home 경로다.
 
 ### make-plan — 2026-06-04 드리프트 2건 수정
 
@@ -93,6 +97,15 @@
 2026-07-23에는 `make-plan`·`read-review`·`write-review`의 명시 호출 전용 여부를 description 문구에 의존하지 않고 제품별 정책으로 강제했다. Claude는 `SKILL.md` frontmatter의 `disable-model-invocation: true`, Codex는 `agents/openai.yaml`의 `policy.allow_implicit_invocation: false`를 사용한다.
 
 ## 검증 이력
+
+### 2026-08-21 — review-independently 전달 가능성·외부 근거 보강
+
+- **범위**: `review-independently`의 `SKILL.md` 6개 항목(Boundaries 1건, Workflow 3건, Review Format Rules 2건). `references/review-template.md`는 이미 `Inputs`·`Evidence Reviewed`·`Limitations`로 같은 정보를 요구하고 있어 수정하지 않았다.
+- **동기**: skill 점검에서 "참고한 자료를 서술하라"는 요구가 저장 review에만 있고 chat 응답에는 없다는 점, 조사·인용 지침이 code에 편중되어 있다는 점을 확인했다. 이후 실제 용도가 이 agent의 검토 의견을 다른 agent에게 전달하는 것임이 드러나면서, chat 응답의 자기완결성이 가장 중요한 공백으로 확정됐다.
+- **판단**: 새 skill을 만들지 않았다. 의견 전달은 `handoff`의 작업 상태 이관과 다르고, 대상을 독립적으로 판단하는 `review-independently`가 이미 맞는 skill이다. `Boundaries`의 "this session's prior involvement are not evidence"는 전달 용도에서 오히려 의견의 가치를 지탱하는 핵심 조항이므로 유지했다.
+- **결과**: 줄 수 증가 없이 기존 6개 줄만 확장했다(6 insertions, 6 deletions). code 검토 문구를 그대로 보존해 기존 동작에 회귀가 없다.
+- **부수 정정**: 표와 항목별 메모에 남아 있던 "호출 표기(`/review-independently` ↔ `$review-independently`) 변환" 기술을 제거했다. 현재 양쪽 `SKILL.md` 본문에 호출 표기가 없어 실제 차이가 아니다.
+- **변환**: claude → codex는 frontmatter의 `disable-model-invocation`, 저장 prefix(`claude-review-`/`codex-review-`), tool home 경로만 다르다. 본문 6개 항목은 byte 동일하게 포팅했고 `diff`로 잔여 차이가 이 4종뿐임을 확인했다.
 
 ### 2026-08-20 — 한국어 언어 선택과 문체 계층 분리
 
