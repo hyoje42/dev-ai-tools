@@ -41,7 +41,7 @@
 
 2026-06-23부로 Codex의 작업 규칙을 `home/AGENTS.md`로 통합하고 `home/rules/dev-tools/`를 제거했다. 2026-08-20에는 언어 선택과 한국어 문체의 역할을 분리했다(아래 검증 이력 참고). 따라서 rule/config는 더 이상 도구 간 파일 단위로 짝지어지지 않는다:
 
-- **Claude**: `home/rules/*.md` 개별 작업 규칙 + `home/output-styles/fluent-korean.md` 한국어 문체 (`~/.claude/rules/` auto-load + settings의 output style 선택)
+- **Claude**: `home/rules/*.md` 개별 작업 규칙 + `home/output-styles/fluent-korean-concise.md` 응답 구성·한국어 문체 (`~/.claude/rules/` auto-load + settings의 output style 선택). `fluent-korean.md`는 상류 대조본으로 남아 있고 활성 스타일이 아니다
 - **Codex**: `home/AGENTS.md`의 언어 선택·작업 규칙 + `home/config.toml`의 `developer_instructions` 한국어 문체 (`~/.codex/rules/`는 지시문으로 로드되지 않음: [agents-md 가이드](https://developers.openai.com/codex/guides/agents-md), [#23788](https://github.com/openai/codex/issues/23788))
 
 `check-sync-status`는 계속 **skills만** 비교한다. rule/config 내용의 도구 간 정합성은 Codex의 `home/AGENTS.md`·`developer_instructions`와 Claude의 `home/rules/`·output style을 사람이 직접 대조한다.
@@ -97,6 +97,22 @@
 2026-07-23에는 `make-plan`·`read-review`·`write-review`의 명시 호출 전용 여부를 description 문구에 의존하지 않고 제품별 정책으로 강제했다. Claude는 `SKILL.md` frontmatter의 `disable-model-invocation: true`, Codex는 `agents/openai.yaml`의 `policy.allow_implicit_invocation: false`를 사용한다.
 
 ## 검증 이력
+
+### 2026-09-09 — Claude output style을 fluent-korean-concise로 교체 (Codex 반영 예정)
+
+- **범위**: Claude의 `home/output-styles/fluent-korean-concise.md` 추가와 `settings.json`의 `outputStyle` 전환. Codex의 `home/config.toml` `developer_instructions`는 건드리지 않았다.
+- **내용**: 새 스타일은 상류 `fluent-korean`의 버전 갱신이 아니라 직접 작성한 개정본이다. 상류의 절 구조(상황과 목표, 동작 범위, 문장 단위, 구 단위, 추가 사항, 세부 동작)를 버리고, 응답 구성 절반(결과 우선, 기본 분량, 정보 선택, 형식 선택, 어조, 작업 중 상태 공유, 예외와 우선순위)과 한국어 문장 절반으로 재구성했다. 54줄에서 100줄로 늘었다.
+- **변환 판단**: 이번 커밋에서는 Codex를 함께 고치지 않고, **나중에 별도 작업으로 반영한다**. 2026-08-20에 정한 계층 분리는 그대로 유지되며, 그때까지 Codex의 한국어 문체는 상류 `fluent-korean` 기준의 `developer_instructions`가 담당한다. 새 스타일의 응답 구성 절반은 Claude Code의 답변 형식·상태 공유를 전제로 하므로 옮길 대상이 아니고, 반영 범위는 한국어 문장 절반으로 한정한다.
+- **후속 작업**: 지금 두 도구의 한국어 문체가 갈라진 것은 실수가 아니라 반영을 미룬 상태다. 후속 작업에서 `developer_instructions`를 `fluent-korean-concise`의 "한국어 문장" 절로 교체하고, 그 결과를 이 문서에 다시 기록한다. 그때까지는 이 항목이 미완 표시 역할을 한다.
+- **문서 정합성**: `claude-config/README.md`의 output style 절을 두 스타일 구성으로 고치고, 상류 diff를 수동 반영하는 대상이 `fluent-korean`뿐임을 명시했다. 이 문서의 Rules 절도 활성 스타일 파일명을 바꿨다.
+- **검증**: `home/` 하위 skill은 변동이 없어 `./check-sync-status` 결과에 영향이 없다. output style은 여전히 기계 검증 대상이 아니며 수동 대조로 남는다.
+
+### 2026-09-09 — Claude `settings.json` 권한·env 정리 (Codex 미적용)
+
+- **범위**: Claude의 `home/settings.json`만 바꿨다. `permissions.allow`에서 `Read(./**/*)`와 git 읽기 명령 24개를 제거하고, 스킬(`handoff`·`make-plan`·`review-independently`)이 실행하는 `date` 명령 3개만 남겼다. `permissions.deny`는 33개에서 28개로 정리했다: `.envrc`(`.env*`에 포함)·`*.asc`·`*.cer`·`*.crt`·`*.csr`·`/etc/**`를 제거하고, `.git` 규칙 3개를 `./**/.git/**` 하나로 합치고, `~/.git-credentials`·`~/.npmrc`·`~/.netrc`를 추가했다. `env`에서 `CLAUDE_CODE_DISABLE_ADAPTIVE_THINKING`과 `MAX_THINKING_TOKENS`를 제거했다.
+- **판단 근거**: Claude Code 2.1.266 문서 기준으로, 작업 디렉터리 안의 읽기와 내장 read-only 집합의 git 명령은 어떤 권한 모드에서도 프롬프트가 없어 allow가 동작을 바꾸지 않는다. auto 모드는 작업 디렉터리 읽기를 분류기 없이 승인하므로 비밀 파일을 막는 장치는 deny뿐이라 deny는 중복과 공개 자료(인증서)만 줄였다. 사용자 설정에서 `/etc/**`처럼 슬래시 하나로 시작하는 패턴은 `~/.claude/` 기준으로 해석되어 한 번도 동작한 적이 없었고(`//` 접두사가 파일시스템 루트), 사용자 결정으로 재앵커 대신 삭제했다. 두 env 변수는 Opus 4.6·Sonnet 4.6에만 적용되고 Fable·Sonnet 5·Opus 4.7 이후에는 효력이 없다.
+- **변환 판단**: Codex에는 적용하지 않는다. 권한 DSL과 thinking env 변수는 [codex-config-from-claude.md](./codex-config-from-claude.md)에 Claude 전용으로 기록된 항목이고, Codex는 자체 rules·sandbox·approval 정책과 모델 reasoning 설정을 쓴다. 대응 항목이 없으므로 드리프트가 아니다.
+- **검증**: `jq empty`와 `claude-config/tests/settings-merge.sh`를 통과했고, `claude-diff-with-home` dry-run에서 예정된 변경만 확인했다. 홈에는 적용하지 않았다. `${VAR}` 확장이 섞인 Bash 명령은 정적 deny 검사를 거치지 않고 auto 모드 분류기로 넘어가 `.git/config` 읽기가 허용되는 것을 확인했는데, 설정으로 막을 수 없는 하네스 동작이라 기록만 남긴다.
 
 ### 2026-08-21 — status line 세션 비용 표시 정렬
 
