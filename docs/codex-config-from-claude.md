@@ -13,7 +13,7 @@
 Claude `home/settings.json`의 항목 중 Codex에 대응이 없거나 형식이 다른 것은 옮기지 않았다.
 
 - `env.CLAUDE_CODE_EXPERIMENTAL_AGENT_TEAMS` — Claude 전용 실험 플래그. Codex엔 같은 기능이 없어, 관련 skill(`setup-team-agents`)은 2026-06-12에 퇴역해 `outdated/`로 옮겼다.
-- `env.CLAUDE_CODE_DISABLE_ADAPTIVE_THINKING`, `env.MAX_THINKING_TOKENS` — Claude 전용 환경 변수. Codex의 reasoning effort는 `~/.codex/config.toml`의 모델·추론 설정으로 관리한다.
+- `env.CLAUDE_CODE_DISABLE_ADAPTIVE_THINKING`, `env.MAX_THINKING_TOKENS` — Claude 전용 환경 변수였고, 2026-09-09에 Claude baseline에서도 제거했다(Fable·Sonnet 5·Opus 4.7 이후 모델은 항상 adaptive reasoning이라 효력이 없다). Codex의 reasoning effort는 `~/.codex/config.toml`의 모델·추론 설정으로 관리한다.
 - `permissions.allow`/`permissions.deny`, `defaultMode` — Claude 권한 DSL. Codex는 `~/.codex/rules/default.rules`·sandbox·approval 정책을 쓰며, 기존 승인 규칙을 덮어쓰면 위험하므로 동기화 대상에서 제외했다. 특히 `permissions.defaultMode = auto`는 한국어 문체와 무관하므로 style 이식 과정에서 Codex 권한 설정으로 변환하지 않는다.
 - `attribution.commit`/`attribution.pr`/`attribution.sessionUrl` — Codex에 직접 같은 JSON 구조는 없으므로, 대응 가능한 공통값은 `home/config.toml`의 `commit_attribution = ""` 같은 Codex TOML 설정으로 둔다.
 - `skipDangerousModePermissionPrompt`, `skipAutoPermissionPrompt` — Claude 전용 프롬프트 설정.
@@ -21,7 +21,7 @@ Claude `home/settings.json`의 항목 중 Codex에 대응이 없거나 형식이
 Codex에 반영한 방식:
 
 - Claude `language = korean` → `codex-config/home/AGENTS.md`의 기본 응답 언어 규칙. 파일 편집·도구 사용·git 커밋 같은 공통 작업 규칙도 이 파일에 둔다.
-- Claude `outputStyle = fluent-korean`과 `home/output-styles/fluent-korean.md` → `codex-config/home/config.toml`의 `developer_instructions`. Codex에는 대응하는 named output style loader가 없으므로, 언어 선택과 분리된 한국어 자연어 문체 지침으로 의미 변환한다.
+- Claude `home/output-styles/fluent-korean.md` → `codex-config/home/config.toml`의 `developer_instructions`. Codex에는 대응하는 named output style loader가 없으므로, 언어 선택과 분리된 한국어 자연어 문체 지침으로 의미 변환한다. 2026-09-09부터 Claude의 활성 `outputStyle`은 직접 작성한 `fluent-korean-concise`이지만, Codex `developer_instructions`는 계속 상류 대조본 `fluent-korean.md`를 기준으로 하며 concise 스타일은 옮기지 않는다([skill-sync-status.md](./skill-sync-status.md)의 2026-09-09 항목 참고).
 - Claude output style의 `keep-coding-instructions` metadata는 옮기지 않는다. Codex의 `developer_instructions`는 built-in instructions를 교체하는 설정이 아니라 실제 `developer` role에 추가되는 지침이므로 대응 metadata가 필요하지 않다.
 - 커스텀 skill 원본 → `codex-config/home/skills/`, sync 대상 → `~/.agents/skills/`.
 - 공통 Codex config 값(예: attribution·feature 기본값) → `codex-config/home/config.toml` baseline.
