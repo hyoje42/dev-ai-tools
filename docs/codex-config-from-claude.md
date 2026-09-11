@@ -12,11 +12,11 @@
 
 Claude `home/settings.json`의 항목 중 Codex에 대응이 없거나 형식이 다른 것은 옮기지 않았다.
 
-- `env.CLAUDE_CODE_EXPERIMENTAL_AGENT_TEAMS` — Claude 전용 실험 플래그. Codex엔 같은 기능이 없어, 관련 skill(`setup-team-agents`)은 2026-06-12에 퇴역해 `outdated/`로 옮겼다.
+- `env.CLAUDE_CODE_EXPERIMENTAL_AGENT_TEAMS` — Claude 전용 실험 플래그였다. Codex엔 같은 기능이 없어, 관련 skill(`setup-team-agents`)은 2026-06-12에 퇴역해 `outdated/`로 옮겼다. 이 값이 켜져 있으면 요청하지 않아도 팀이 생길 수 있어 2026-09-11에 Claude baseline에서도 지웠고, 남는 환경 변수가 없어 `env` 블록째 없앴다([skill-sync-status.md](./skill-sync-status.md)의 2026-09-11 항목 참고). 팀이 필요하면 `CLAUDE_CODE_EXPERIMENTAL_AGENT_TEAMS=1 claude`로 실행하거나 머신 전용 `local/settings.override.json`에 넣는다.
 - `env.CLAUDE_CODE_DISABLE_ADAPTIVE_THINKING`, `env.MAX_THINKING_TOKENS` — Claude 전용 환경 변수였고, 2026-09-09에 Claude baseline에서도 제거했다(Fable·Sonnet 5·Opus 4.7 이후 모델은 항상 adaptive reasoning이라 효력이 없다). Codex의 reasoning effort는 `~/.codex/config.toml`의 모델·추론 설정으로 관리한다.
 - `permissions.allow`/`permissions.deny`, `defaultMode` — Claude 권한 DSL. Codex는 `~/.codex/rules/default.rules`·sandbox·approval 정책을 쓰며, 기존 승인 규칙을 덮어쓰면 위험하므로 동기화 대상에서 제외했다. 특히 `permissions.defaultMode = auto`는 한국어 문체와 무관하므로 style 이식 과정에서 Codex 권한 설정으로 변환하지 않는다.
 - `attribution.commit`/`attribution.pr`/`attribution.sessionUrl` — Codex에 직접 같은 JSON 구조는 없으므로, 대응 가능한 공통값은 `home/config.toml`의 `commit_attribution = ""` 같은 Codex TOML 설정으로 둔다.
-- `skipDangerousModePermissionPrompt`, `skipAutoPermissionPrompt` — Claude 전용 프롬프트 설정.
+- `skipAutoPermissionPrompt` — Claude 전용 프롬프트 설정. 함께 있던 `skipDangerousModePermissionPrompt`는 bypass 모드 경고를 수락할 때 하네스가 기록하는 상태값이 baseline에 커밋된 것이어서, 2026-09-11 커밋 `709d333`에서 Claude baseline에서 지웠다.
 
 Codex에 반영한 방식:
 

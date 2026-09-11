@@ -18,7 +18,7 @@ SYNC_DOC="$ROOT/docs/skill-sync-status.md"
 
 EXPECTED_IDENTICAL="git-commit-message"
 EXPECTED_DIFFERS="handoff load-handoff make-plan review-independently review-pr"
-EXPLICIT_ONLY="make-plan review-independently"
+EXPLICIT_ONLY="handoff load-handoff make-plan review-independently"
 failures=0
 
 contains_word() {
@@ -81,8 +81,7 @@ normalize_skill_file() {
         else
             sed -n 'p' "$file"
         fi | sed -E \
-            -e 's#/load_handoff#load-handoff#g' \
-            -e 's#/(make-plan|review-independently|review-pr)#\1#g' \
+            -e 's#/(load-handoff|make-plan|review-independently|review-pr)#\1#g' \
             -e 's/Slash command/Invocation command/g' \
             -e 's/Claude/SELF_TOOL/g' \
             -e 's/Codex/OTHER_TOOL/g' \
