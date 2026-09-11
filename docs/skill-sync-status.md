@@ -30,11 +30,11 @@
 
 | Skill | 차이 유형 | 차이 내용 / 사유 | 검증 | 최종 점검 |
 |---|---|---|---|---|
-| git-commit-message | 동일 | **자기완결형**: 커밋 형식·언어·승인 규칙을 SKILL.md에 직접 인라인(전역 규칙과 의도적 중복 — 독립성 우선). 워크플로·한국어 응답 템플릿 포함, claude/codex byte 동일 | ✅ | 2026-07-23 |
-| handoff | 변환 | 복구 계약과 template 의미는 동일. 도구 명칭("Claude/Codex instance"), 작성자 prefix `claude-handoff-`↔`codex-handoff-`, 전역 경로 `~/.claude`↔`~/.codex`만 변환. 원 세션 없이도 사용자 의도·결정 근거·검증 상태·불확실성·승인 경계·다음 행동을 복구하는 자기완결형 handoff | ✅ | 2026-07-24 |
-| load-handoff | 변환 | 복원·drift 검증·resume 권한 계약은 동일. 작성자 prefix·도구 명칭 치환(교차 agent 예시는 반대 prefix), 호출 예시 `/load_handoff`↔`$load-handoff`만 변환 | ✅ | 2026-07-24 |
-| make-plan | 변환 | 플랜 파일 prefix `claude-plan-`↔`codex-plan-`, 세션 명칭, 호출 표기 `/make-plan`↔`$make-plan`. 명시 호출 전용 정책은 Claude frontmatter ↔ Codex `agents/openai.yaml`로 변환 | ✅ | 2026-07-23 |
-| review-pr | 변환 | 본문 workflow는 tool-neutral이고 `SKILL.md`의 호출 표기만 `/review-pr`↔`$review-pr`로 다름. `references/` 4종은 byte 동일하며, 생략한 base는 upstream tracking branch가 아니라 remote default branch에서 해석 | ✅ | 2026-07-23 |
+| git-commit-message | 동일 | **자기완결형**: 커밋 형식·언어·승인 규칙을 SKILL.md에 직접 인라인(전역 규칙과 의도적 중복 — 독립성 우선). 워크플로·한국어 응답 템플릿 포함, claude/codex byte 동일 | ✅ | 2026-09-11 |
+| handoff | 변환 | 복구 계약과 template 의미는 동일. 도구 명칭("Claude/Codex instance"), 작성자 prefix `claude-handoff-`↔`codex-handoff-`, 전역 경로 `~/.claude`↔`~/.codex`만 변환. 원 세션 없이도 사용자 의도·결정 근거·검증 상태·불확실성·승인 경계·다음 행동을 복구하는 자기완결형 handoff. 명시 호출 전용 정책은 Claude frontmatter ↔ Codex `agents/openai.yaml`로 변환 | ✅ | 2026-09-11 |
+| load-handoff | 변환 | 복원·drift 검증·resume 권한 계약은 동일. 작성자 prefix·도구 명칭 치환(교차 agent 예시는 반대 prefix), 호출 예시 `/load-handoff`↔`$load-handoff`만 변환. 명시 호출 전용 정책은 Claude frontmatter ↔ Codex `agents/openai.yaml`로 변환 | ✅ | 2026-09-11 |
+| make-plan | 변환 | 플랜 파일 prefix `claude-plan-`↔`codex-plan-`(교차 agent 예시는 반대 prefix)와 세션 명칭만 변환. 본문에 호출 표기가 없어 그 항목은 차이에 해당하지 않는다. 명시 호출 전용 정책은 Claude frontmatter ↔ Codex `agents/openai.yaml`로 변환 | ✅ | 2026-09-11 |
+| review-pr | 변환 | 본문 workflow는 tool-neutral이고 `SKILL.md`의 호출 표기만 `/review-pr`↔`$review-pr`로 다름. `references/` 4종은 byte 동일하며, 생략한 base는 upstream tracking branch가 아니라 remote default branch에서 해석. description 트리거는 PR 초안 요청만 남겼고, 초안은 같은 변경을 리뷰해 병합을 막는 문제부터 보고한 뒤 저장소 PR 템플릿을 우선해 작성 | ✅ | 2026-09-11 |
 | review-independently | 변환 | 범용 독립 검토 workflow는 동일. review 저장을 명시적으로 요청받았을 때의 agent prefix·metadata(`claude-review-`/`claude` ↔ `codex-review-`/`codex`)와 tool home 경로만 변환. 본문에 호출 표기가 없어 그 항목은 차이에 해당하지 않는다. 명시 호출 전용 정책은 Claude frontmatter ↔ Codex `agents/openai.yaml`로 변환 | ✅ | 2026-08-21 |
 
 ## Rules
@@ -71,6 +71,7 @@
 - **rule** (상시 적용): conventional format, 50자 제목, **영어 강제**, AI attribution 금지, 명시적 승인 없이 commit 금지. skill을 안 거치는 커밋에도 적용된다.
 - **skill** (호출 시): staged 변경 우선 분석(없으면 전체 working tree를 보고 유연하게 판단) → 파일별 설명 → 메시지 제안 → 승인 대기 워크플로와 한국어 응답 템플릿. 형식 규칙은 rule을 참조해 중복을 없앴다.
 - **2026-06-23**: ① Codex 전역 규칙을 `rules/dev-tools/`에서 `AGENTS.md`로 통합(`git-commit-guidelines` 포함). ② 이후 `git-commit-message` skill을 **자기완결형**으로 전환 — 형식·언어·승인 규칙을 SKILL.md에 직접 인라인(claude/codex 동일). 전역 규칙(codex `AGENTS.md` / claude `rules/git-commit-guidelines.md`)은 skill 안 거친 **직접 커밋**용으로 유지. skill 단독 사용·전역 설정 상이 케이스를 위해 독립성을 택한 결정이라 **의도적 중복**이며, 두 사본은 수동으로 동기 유지한다.
+- **현재 상태 (2026-09-12 확인)**: 위 rule 설명과 달리 지금 전역 규칙(Claude `home/rules/git-commit-guidelines.md`, Codex `home/AGENTS.md`의 Git Commit 절)에는 승인 조항만 남아 있다. 영어 작성, conventional format, 50자 제목, AI co-author trailer 금지는 git-commit-message skill 본문에만 있고, 하네스가 붙이는 attribution은 Claude `settings.json`의 `attribution`과 Codex `config.toml`의 `commit_attribution`을 빈 값으로 두어 끈다.
 
 ### review-independently — 2026-08-07 통합 / 2026-08-21 전달 가능성 보강
 
@@ -97,6 +98,56 @@
 2026-07-23에는 `make-plan`·`read-review`·`write-review`의 명시 호출 전용 여부를 description 문구에 의존하지 않고 제품별 정책으로 강제했다. Claude는 `SKILL.md` frontmatter의 `disable-model-invocation: true`, Codex는 `agents/openai.yaml`의 `policy.allow_implicit_invocation: false`를 사용한다.
 
 ## 검증 이력
+
+### 2026-09-11 — Claude 중심 skill·rule·settings 경량화 (skill은 Codex 동시 반영)
+
+- **범위**: 모델과 Claude Code 하네스가 좋아지면서 근거가 사라졌거나 줄여도 되는 조항을 Claude `home/`에서 찾아 정리했다. 짝 사본이 있는 skill은 Codex `home/skills/`도 같이 고쳤고, rule, settings, output style은 Claude에만 반영했다. 커밋 승인 범위 문장만 예외로, 두 도구의 전역 커밋 규칙과 git-commit-message skill 두 사본에 함께 넣었다(아래 "커밋 규칙 보강"). 단위별 감사, 반박 검증, 완결성 검토를 거친 항목 가운데 반박 검증을 통과했거나 사용자가 고른 항목만 반영했다. 1차 반영은 `claude-config@709d333`·`codex-config@6e538b7`에 들어갔고, 2차 반영은 그 뒤 커밋에 들어간다.
+- **skill 1차**: handoff의 Writing Checklist를 지웠다. 체크 항목이 모두 워크플로 단계와 template에 이미 있었다. make-plan은 Rules 절을 지우고, 본문에 없던 세 조항(Context 절 필수, 검증하지 않은 주장을 옮기지 않음, 같은 세션에서도 새 버전 파일 생성)만 워크플로와 Version Management 절로 옮겼다.
+- **skill 2차**:
+  - handoff·load-handoff를 명시 호출 전용으로 바꿨다. Claude는 `disable-model-invocation: true`, Codex는 `agents/openai.yaml`의 `policy.allow_implicit_invocation: false`를 쓴다. 500자가 넘는 description이 매 세션 skill 목록에 들어갔는데, 사용자가 description을 줄이는 대신 이 방식을 골랐다. 이제 `/handoff`·`/load-handoff`(Codex는 `$handoff`·`$load-handoff`)로 직접 불러야 한다.
+  - load-handoff: 존재하지 않는 명령 `/load_handoff`를 `/load-handoff`로 고쳤다. 45줄짜리 Response Template은 `## Report` 절로 바꾸되 2026-07-24에 넣은 복원 항목은 모두 남겼다. 처음에는 한 문단이었고, 비교 검증 뒤 필수 항목 불릿으로 바꿨다(아래 "전후 비교 검증과 보완"). Purpose 절과, 워크플로 1단계의 경로 해석과 겹치던 오류 처리 두 줄을 지웠다. "재개 후 작업이 남으면 새 handoff를 만든다"는 "세션을 마칠 때 제안하고, 사용자가 요청할 때만 작성한다"로 바꿨다.
+  - handoff: 지식 구분 단계를 의도 복구 단계의 한 항목으로 합치고 단계 번호를 다시 매겼다. Best Practices에서 다른 항목과 겹치는 "Be operational"과 "Be explicit about uncertainty"를 지웠다. 2026-07-24 복구 계약(template 필드, 줄 수보다 복구 가능성 우선, Resume Checklist)은 그대로 둔다.
+  - make-plan: 8단계 워크플로를 3단계(위치 결정, 근거 확보, 작성과 보고)로 줄였다. 탐색이 얕아지지 않도록 코드 탐색과 참조 자료 검증 문장은 남겼다.
+  - review-pr: 전면 재작성하지 않고 네 곳만 고쳤다. description에서 리뷰 전용 트리거 4개('review this PR' 등)를 빼고 PR 초안 트리거만 남겼다. 초안 전 리뷰는 유지하되 발견 사항을 병합을 막는 문제부터 간결하게 보고하고, 초안을 쓸 때 빌드·테스트는 스스로 돌리지 않는다(아래 "전후 비교 검증과 보완"). 저장소 PR 템플릿이나 `CONTRIBUTING.md`가 있으면 그것을 따르고, 기본 `references/pr-body-template.md`는 Summary·Changed files·Testing·Risk 4개 절로 줄였다. When Not To Use에서 "항상 리뷰부터 한다" 항목은 지웠다.
+- **review-pr 판단 근거**: Codex에서 review-pr를 실제로 부른 5건 중 4건이 PR 초안 요청이었고, 사용자는 더 짧게 써 달라는 요청(7번 중 6번), 변경 파일을 넣어 달라는 요청(3번), 저장소 PR 템플릿 사용을 반복했다. Claude 쪽 리뷰 요청은 내장 `/code-review`와 겹친다. Codex에는 내장 리뷰 명령이 없지만, description 트리거는 암묵 호출에만 영향을 주므로 `$review-pr`로 리뷰를 직접 부를 수 있어 두 사본을 같은 의미로 유지했다. 리뷰 단계를 빼고 초안 전용 skill로 재작성하는 안은 사용자가 리뷰 후 초안 흐름의 가치를 들어 기각했다.
+- **전후 비교 검증과 보완**: 축소한 load-handoff와 review-pr가 결과물 품질을 떨어뜨리지 않는지 옛 버전과 새 버전을 같은 입력으로 비교했다. 결론은 두 skill 모두 새 버전을 유지하는 것이고, 되돌린 부분은 없다.
+  - 조건: `claude-opus-5`로 읽기 전용 도구만 허용하고 세션 기록을 남기지 않았다. load-handoff는 evofit 저장소에서 버전마다 3회 실행했다. review-pr는 병합 전으로 되돌린 복제본에서 실행했다. voice-exec-app `feat/integrate-skill-shortcuts`와 tinicore-bootstrap `fix/triggered-jobs-next-run-at`(PR 템플릿 있음)은 버전마다 2회, self-evolving-plugin `fix/codex-hook-output-schema`는 버전마다 1회다.
+  - load-handoff 결과: 드리프트 탐지와 "다음 행동을 실행하지 않음"은 두 버전이 같았다. 새 버전 응답은 33~47줄로, 이모지와 영어 헤더를 쓰던 옛 버전(58~82줄)보다 읽기 쉬웠다. 다만 새 버전은 3회 모두 성공 기준과 완료·진행·대기 구분을 빠뜨렸고, 1회는 handoff 파일 경로도 빠뜨렸다.
+  - review-pr 결과: voice-exec-app의 실제 High 버그를 새 버전은 2회 모두 High로 찾았다. 저장소 PR 템플릿은 옛 버전이 2회 모두 무시했고, 새 버전은 2회 모두 따랐다. 초안 길이는 옛 82~111줄(7개 절)에서 새 62~75줄(4개 절)로 줄었다. 요청 없는 빌드·테스트 시도는 옛 버전 5회 중 3회, 새 버전 5회 중 1회였다. 초안을 쓸 때 리뷰가 얕아지는 문제는 없었고, 새 버전도 High부터 Low까지 모두 보고했다. 회당 비용은 옛 $1.7~2.5, 새 $1.7~1.8이다.
+  - 한계: 실행 횟수가 적고, Codex에서는 실행하지 않았다.
+  - 보완 1 (load-handoff `## Report`, 두 사본): 한 문단으로 나열하던 항목을 필수 항목 불릿 8개로 바꿨다. 항목은 작업과 handoff 파일 경로, 기록 상태와 현재 상태·드리프트, 성공 기준, 금지 사항과 승인 조건, 채택·기각 결정, 완료·진행·대기로 나눈 진행 상황, 검증하지 않은 주장, 첫 다음 행동과 기대 결과·중단 조건이다. 배치는 자유지만 항목을 빼면 안 되고, 해당하지 않으면 "none"으로 적는다. 문단 형태에서 같은 항목이 반복해서 빠졌기 때문이다.
+  - 보완 2 (review-pr Preconditions, 두 사본): "사용자나 저장소 PR 템플릿·체크리스트가 요구하는 검사는 실행한다"는 문구를 바꿨다. 이제 초안을 쓸 때는 빌드나 테스트를 스스로 돌리지 않는다. 사용자나 템플릿·체크리스트가 요구했는데 실행하지 않은 검사가 있으면, 초안을 보여 준 뒤 목록으로 알리고 돌릴지 사용자에게 묻는다. 비교 검증에서 새 버전이 tinicore-bootstrap의 체크리스트 문구를 근거로 요청 없이 `cargo fmt/test`를 시도했고, 사용자는 "사용자가 요청 안하면 안하는거는 맞는데 사용자에게 물어보라해 다 정리하고 나서"라고 결정했다.
+  - 보완 3 (review-pr Preconditions 첫 불릿, 두 사본): "report only merge-blocking issues in a few lines"를 "report the findings concisely with merge-blocking issues first (or say none were found)"로 바꾸고, Risk 절에 넘기는 대상도 "remaining risk"에서 "risks that matter for merging or rollout"로 바꿨다. 비교 검증에서 새 버전은 "병합을 막는 문제만" 지시를 따르지 않고 High부터 Low까지 모두 보고했는데, 오히려 실제 High 버그를 2회 모두 찾는 좋은 결과가 나왔다. 사용자도 리뷰하면서 초안을 쓰는 방식을 원한다. 지시와 실제 동작이 어긋난 채로 두면 나중에 모델이 지시를 글자 그대로 따를 때 리뷰가 좁아질 수 있으므로, 지시를 원하는 동작에 맞췄다.
+- **skill 변환 판단**: 모든 skill 변경을 두 사본에 같은 의미로 반영했다. 남은 차이는 기존 변환 항목(도구 명칭, 작성자 prefix, 홈 경로, 호출 표기)과 명시 호출 정책 파일뿐이다. 표의 make-plan 행에 적혀 있던 호출 표기 변환은 현재 양쪽 본문에 호출 표기가 없어 뺐다.
+- **Claude rule (Codex 미적용)**:
+  - `tool-usage.md`의 "Prefer Relative Paths"를 지웠다. Claude Code 2.1.268의 Read·Edit·Write 스키마가 절대 경로를 요구하고, 작업 중에도 `cd` 뒤 상대 경로 Read가 실패했다.
+  - `response-format.md`: 상태 공유 빈도는 output style이 정하므로 §1은 "변경 묶음마다 한 번 설명"으로 좁히고 §4(관련 Edit 묶기)는 지웠다. §3의 "기술 용어와 코드 식별자는 원문 유지" 문장도 지웠다. Claude의 `language` 설정과 output style이 같은 내용을 이미 지시한다.
+  - `agent-instruction-files.md`(1985B → 1211B)와 `python-guidelines.md`(764B → 369B)는 반복과 예시를 덜어 압축했다. §3 Language는 원문 그대로 두었고, python 규칙에 uv 같은 새 정책은 넣지 않았다.
+- **Claude settings (Codex 미적용)**: `home/settings.json`에서 KST `date` 허용 규칙 3개, `skipDangerousModePermissionPrompt`, `env.CLAUDE_CODE_EXPERIMENTAL_AGENT_TEAMS`를 지웠다. 마지막 값을 지우면 남는 환경 변수가 없어 `env` 블록도 함께 없앴다.
+  - date 규칙은 정확히 일치하는 명령에만 적용되는데, 세션 기록에 남은 KST date 실행 6건은 모두 `$(...)` 치환이나 `;`·`&&`로 이어진 복합 명령이어서 한 번도 규칙과 맞지 않았다.
+  - `skipDangerousModePermissionPrompt`는 사용자 선호가 아니라 bypass 모드 경고를 한 번 수락했을 때 하네스가 사용자 설정에 기록하는 값이 baseline에 커밋된 것이다. 감사 시점의 세션 기록에 bypass 모드 사용은 없었다.
+  - `CLAUDE_CODE_EXPERIMENTAL_AGENT_TEAMS`는 사용자 결정으로 지웠다. [agent teams 문서](https://code.claude.com/docs/en/agent-teams)에 따르면 이 값이 켜져 있을 때 Claude가 이름을 붙인 subagent는 확인 없이 팀원으로 실행되므로, 요청하지 않아도 팀이 생길 수 있다. 최근 세션 기록의 Agent 호출 8건에는 모두 이름이 없어 팀 기능을 쓴 흔적이 없고, 팀 구성을 돕던 `setup-team-agents`는 2026-06-12에 퇴역했다. 세션 간 메시징(`SendMessage`, `@세션` 언급)은 v2.1.224부터 설정 없이 켜지는 별도 기능이라 이 값과 관계없다([cross-session messaging 문서](https://code.claude.com/docs/en/cross-session-messaging)). 팀이 필요하면 `CLAUDE_CODE_EXPERIMENTAL_AGENT_TEAMS=1 claude`로 실행하거나 머신 전용 `local/settings.override.json`에 넣는다.
+- **Codex에 옮기지 않은 이유**:
+  - Codex `home/AGENTS.md`에는 편집 전 설명, 관련 변경 묶기, 상대 경로 우선 조항이 남아 있다. Claude 쪽 삭제 근거는 Claude Code의 도구 스키마와 output style이었는데, Codex는 승인 프롬프트와 `apply_patch`로 편집하므로 같은 근거가 성립하지 않는다. Codex 조항은 Codex 동작을 기준으로 따로 판단한다.
+  - `agent-instruction-files`·`python-guidelines` 압축은 의미를 바꾸지 않았으므로 Codex `AGENTS.md`의 같은 절을 맞춰 고칠 필요가 없다.
+  - settings 변경은 Claude 권한 DSL, 하네스 상태값, Claude 전용 agent team 스위치라 Codex에 대응 설정이 없다. Codex의 승인 규칙은 sync가 보존하는 `~/.codex/rules/default.rules`에 있다.
+  - response-format §3의 문장을 지운 결과, Claude §3과 Codex `AGENTS.md`의 문서 언어 조항은 같은 문장이 되었다.
+- **`check-sync-status`**: `EXPLICIT_ONLY`에 handoff·load-handoff를 추가해 명시 호출 정책 검사 대상이 4개(handoff, load-handoff, make-plan, review-independently)가 되었다. 옛 표기 `/load_handoff`만 따로 치환하던 sed를 지우고, `/load-handoff`를 다른 slash 호출 표기와 같은 규칙으로 정규화한다.
+- **커밋 규칙 보강 (Claude·Codex 공통)**: 경량화와 별도로 커밋 관련 변경 2건을 넣었다.
+  - "An approval covers only the proposal it answers; after further edits, propose again even if the user earlier said to commit and push." 문장을 네 곳의 기존 승인 규칙 끝에 똑같이 붙였다. 전역 규칙 두 곳은 Claude `home/rules/git-commit-guidelines.md`와 Codex `home/AGENTS.md`의 Git Commit 조항이고, skill 두 곳은 git-commit-message `SKILL.md` Commit Rules의 첫 항목(Claude·Codex 사본)이다.
+  - 도입 근거: evofit 세션 `69c04bc5`에서 모델이 커밋 제안에 대한 "커밋하고 push 해" 승인으로 git-commit-message skill을 써서 커밋했다. 그 직후 다른 작업(표 수정안)에 대한 "좋아 반영해"를 근거로, 새 커밋 요청 없이 커밋과 push를 한 번 더 실행했다. 당시에도 규칙, skill, 하네스에 "한 맥락의 승인은 다음 맥락으로 이어지지 않는다"는 문장이 있었으므로, 승인이 어느 제안에 묶이는지를 커밋 조항에 직접 적었다.
+  - 배치 판단: 문장이 특정 도구 기능에 의존하지 않아 변환 없이 두 도구에 넣었다. skill에도 넣은 이유는 2026-06-23 결정에 있다. 그 결정에 따라 skill은 단독으로 써도 동작하도록 승인 규칙을 전역 규칙과 의도적으로 중복해 담고, 두 곳을 수동으로 맞춘다. 승인 범위 문장도 그 승인 규칙의 일부다. evofit 사례가 이 skill로 커밋한 직후에 일어났으므로, skill 본문에 있어야 실제 효과도 난다. 매 세션 로드되는 Claude 규칙은 305B에서 439B로 늘었다.
+  - git-commit-message의 Workflow 2단계(목록 작성)와 9단계(커밋 직전 재확인)에서 `git status --short`를 `git status --short --branch`로 바꿨다. Claude Code 2.1.268의 Bash 도구 설명에 "If on the default branch, branch first."가 들어왔는데, `--short`만으로는 현재 branch와 detached HEAD가 보이지 않는다. 이 작업을 시작할 때 두 submodule이 detached 상태였던 것이 실제 사례다. 요청 없는 branch 생성은 관찰되지 않았으므로 branch 생성 정책은 skill에 넣지 않았다. 두 사본을 똑같이 바꿔 IDENTICAL 상태를 유지한다.
+- **Claude output style (Codex 미적용)**: `home/output-styles/fluent-korean-concise.md`에서 스타일 자신의 기준과 어긋나는 두 곳을 고쳤다.
+  - "적용 범위" 절: "코드, 식별자, 명령어, 로그, 커밋 메시지에는 ..."을 "코드와 코드 주석, 식별자, 명령어, 로그, 커밋 메시지에는 프로젝트의 언어와 기존 관례를 적용합니다."로 바꿨다. Claude의 `language` 설정이 넣는 "Use korean for all explanations, comments" 문장은 코드 주석까지 한국어로 쓰라는 뜻으로 읽힐 수 있다. 상류 `fluent-korean`과 Codex `developer_instructions`는 이미 코드 주석을 지침 적용 대상에서 뺀다고 명시하므로, 이번 수정으로 세 문서의 적용 범위가 맞춰졌다.
+  - "표현 예시" 절: 모범 예문 "사본에 기재된 문구는 작업이 진행되는 상황을 보여 줍니다."를 "사본에 적힌 문구는 작업이 어디까지 됐는지 보여 줍니다."로 바꿨다. 같은 스타일의 어휘 선택 절이 뜻이 흐려지기 쉬운 표현으로 지정한 '진행하다'를 모범 예문이 쓰고 있었다.
+  - Codex 후속 작업: 2026-09-09 항목에 적은 대로, `developer_instructions`를 이 스타일의 "한국어 문장" 절로 바꾸는 작업은 아직 하지 않았다. 옮길 때는 이번 두 곳 수정이 들어간 문구를 기준으로 삼는다.
+- **보류**: review-independently 본문 축소, git-commit-message 본문 축소, fluent-korean-concise 내부 반복 정리는 반영하지 않았다. review-independently는 주 용도인 chat 응답 모드의 사용 기록이 없고, git-commit-message의 관찰된 실패는 지침을 덜 따라서 생겼다. fluent-korean-concise 안의 반복 정리(약 10KB를 8.5KB로 줄이는 작업)는 활성화한 지 얼마 되지 않았으므로 1~2주 써 본 뒤 판단한다. 같은 스타일에서 기준과 어긋난 두 곳은 반영을 마쳤다(위 "Claude output style" 불릿).
+- **유지 결정**: 사용자가 다음 두 가지는 바꾸지 않기로 정했다. 같은 결과를 보고 다시 고치지 않도록 기록한다.
+  - effort 기본값(`modelSettings`): `home/settings.json`과 `local/settings.override.json` 어디에도 넣지 않는다. Claude Code는 `/effort`로 고른 값을 `~/.claude/settings.json`의 `modelSettings`에 저장하지만, `claude-sync-to-home`은 이 파일을 baseline(override가 있으면 baseline과 override를 merge한 결과)으로 다시 쓰므로 sync할 때마다 그 값이 사라진다. 사용자는 이 동작을 알고 그대로 두기로 했다.
+  - template 제목 언어: handoff, make-plan, review-independently, review-pr template의 번역 조항은 사용자가 읽을 수 있도록 본문을 한국어로 쓰게 하려는 것이다. 사용자 원문은 "handoff, make-plan, review-independently, review-pr 이 스킬들은 내가 이해를 해야되니깐 한국어로 적으라는 거엿어. 근데 뭐 제목정도 살짝 영어로 써잇는거는 큰 상관없잖아?"이다. 따라서 섹션 제목이 영어로 남은 산출물은 문제로 보지 않고, template도 고치지 않는다.
+- **이전 기록 정정**: 2026-09-09 항목은 남긴 `date` 명령 3개를 "스킬이 실행하는" 명령으로 적었다. 실제로 스킬이 쓰는 형식은 `%y%m%d`와 `%Y-%m-%d-%H%M%S` 두 가지이고, `%Y-%m-%d`는 어느 스킬도 쓰지 않았다. 이번에 세 규칙을 모두 지웠다.
+- **검증**: `./check-sync-status`가 exit 0으로 끝났다(DIFFERS 5개 정규화 비교와 명시 호출 정책 4개 통과). `bash -n check-sync-status`와 두 submodule의 `git diff --check`에 오류가 없고, `codex-config/tests/sync-home.sh`는 마지막 본문 축소 뒤 다시 실행해 통과했다. review-pr `references/` 4종과 git-commit-message `SKILL.md`는 `cmp`로 byte 동일함을 확인했다. 커밋 규칙 보강, output style 수정, agent team 스위치 삭제, 비교 검증 뒤 보완보다 앞선 변경은 Claude 홈에 이미 반영되어 있어, `claude-diff-with-home`은 `settings.json`, `skills/load-handoff/SKILL.md`, `skills/review-pr/SKILL.md`, `skills/git-commit-message/SKILL.md`, `rules/git-commit-guidelines.md`, `output-styles/fluent-korean-concise.md` 6건을 보고한다. Codex 홈에는 아무것도 반영하지 않아 `codex-diff-with-home`이 수정 7개(`~/.codex/AGENTS.md`와 skill 파일 6개)와 `agents/openai.yaml` 추가 2개를 보고한다.
 
 ### 2026-09-09 — Claude output style을 fluent-korean-concise로 교체 (Codex 반영 예정)
 
