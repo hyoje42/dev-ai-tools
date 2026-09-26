@@ -71,7 +71,7 @@
 - **rule** (상시 적용): conventional format, 50자 제목, **영어 강제**, AI attribution 금지, 명시적 승인 없이 commit 금지. skill을 안 거치는 커밋에도 적용된다.
 - **skill** (호출 시): staged 변경 우선 분석(없으면 전체 working tree를 보고 유연하게 판단) → 파일별 설명 → 메시지 제안 → 승인 대기 워크플로와 한국어 응답 템플릿. 형식 규칙은 rule을 참조해 중복을 없앴다.
 - **2026-06-23**: ① Codex 전역 규칙을 `rules/dev-tools/`에서 `AGENTS.md`로 통합(`git-commit-guidelines` 포함). ② 이후 `git-commit-message` skill을 **자기완결형**으로 전환 — 형식·언어·승인 규칙을 SKILL.md에 직접 인라인(claude/codex 동일). 전역 규칙(codex `AGENTS.md` / claude `rules/git-commit-guidelines.md`)은 skill 안 거친 **직접 커밋**용으로 유지. skill 단독 사용·전역 설정 상이 케이스를 위해 독립성을 택한 결정이라 **의도적 중복**이며, 두 사본은 수동으로 동기 유지한다.
-- **현재 상태 (2026-09-12 확인)**: 위 rule 설명과 달리 지금 전역 규칙(Claude `home/rules/git-commit-guidelines.md`, Codex `home/AGENTS.md`의 Git Commit 절)에는 승인 조항만 남아 있다. 영어 작성, conventional format, 50자 제목, AI co-author trailer 금지는 git-commit-message skill 본문에만 있고, 하네스가 붙이는 attribution은 Claude `settings.json`의 `attribution`과 Codex `config.toml`의 `commit_attribution`을 빈 값으로 두어 끈다.
+- **현재 상태 (2026-09-12 확인)**: 위 rule 설명과 달리 지금 전역 규칙(Claude `home/rules/git-commit-guidelines.md`, Codex `home/AGENTS.md`의 Git Commit 절)에는 승인 조항만 남아 있다. 영어 작성, conventional format, 50자 제목, AI co-author trailer 금지는 git-commit-message skill 본문에만 있고, 하네스가 붙이는 attribution은 Claude `settings.json`의 `attribution`을 빈 값으로 두어 끈다. Codex는 0.156.0에서 `commit_attribution` 키가 제거되어, 설정이 없어도 trailer를 붙이지 않는다(2026-09-23 확인).
 
 ### review-independently — 2026-08-07 통합 / 2026-08-21 전달 가능성 보강
 
@@ -99,6 +99,39 @@
 
 ## 검증 이력
 
+### 2026-09-27 — 새 모델 프롬프트 지침에 맞춰 지시문·skill 정리 (양쪽 submodule)
+
+- **범위**:
+  - Claude output style `fluent-korean-concise`의 상태 공유 조항에서 "사소한 진행 상황을 중계하지 않습니다"를 지우고, 언제 상태를 알릴지 적었다.
+  - Claude `response-format.md`의 §2 Code References를 지웠고, Codex `home/AGENTS.md`의 링크 형식 줄도 지웠다.
+  - 양쪽 skill 사본에 같은 수정을 넣었다. review-pr는 push·PR 생성 금지와 "초안은 요청할 때만"을 한 번씩만 남기고, 인자 해석 질문을 리뷰 대상이 달라질 때로 좁혔다. `target-resolution.md`의 "변경 파일을 끝까지 읽지 말라"도 지웠다. load-handoff는 새 handoff 제안을 사용자가 멈추거나 도구를 바꾼다고 말할 때로 좁혔다. handoff의 `**NEVER**`와 git-commit-message의 `Do NOT`은 평서문으로 바꿨다.
+  - 문서 정정: `claude-config/README.md`의 모델별 하네스 설명을 2.1.280과 Opus 5.5 기준으로 고쳤다. 이 문서의 review-pr 판단 근거(Codex 내장 리뷰)와 thinking 환경 변수 설명도 바로잡았다.
+- **판단 근거**: Claude Code 2.1.280에 번들된 claude-api skill의 `prompt-audit.md`는 현재 모델이 지시를 더 문자 그대로 따르므로, 예전 모델에 맞춘 강조·반복·진행 보고 억제 문구가 과하게 적용된다고 설명한다. 특히 "don't narrate"류 문구가 있으면 Opus 5.5가 진행 상황을 너무 적게 말한다고 하는데, 이 세션에서도 하네스가 상태 공유를 재촉했다. OpenAI GPT-5.6 가이드도 승인 요구를 반복하면 불필요한 확인 질문이 늘어난다고 한다. 링크 형식 조항은 Claude 하네스의 "Reference code as `file_path:line_number` — it's clickable."과 충돌했다. 사용자가 VS Code 확장을 거의 쓰지 않아 하네스 형식을 따르기로 했다. Codex는 GPT-6 기본 프롬프트가 같은 링크 형식을 이미 지정한다. 하네스의 "If on the default branch, branch first."에 대응하는 규칙은 사용자 결정으로 넣지 않았다. 커밋은 git-commit-message 제안을 거치므로, 브랜치를 만들려 하면 승인 전에 드러난다.
+- **변환 판단**: skill 수정은 두 사본에 같은 문자열 치환을 적용했다. output style의 응답 구성 절반은 Claude 전용이라 Codex에 옮기지 않는다.
+- **검증**: `./check-sync-status`와 `git diff --check`를 통과했다. 행동 변화는 아직 Opus 5.5와 GPT-6에서 다시 시험하지 않았다.
+
+### 2026-09-27 — Codex 지시문을 GPT-6 기본 프롬프트에 맞춤 (승인 조항은 양쪽 반영)
+
+- **범위**: Codex `home/AGENTS.md`에서 "Before editing a file, briefly explain…"과 "Prefer `rg`…" 두 줄을 지웠다. 커밋 승인 조항 네 곳에는 이유 구절 "because later edits change what the commit would contain"을 똑같이 붙였다. 네 곳은 Codex `home/AGENTS.md`, Claude `home/rules/git-commit-guidelines.md`, git-commit-message `SKILL.md`의 두 사본이다.
+- **판단 근거**: 사용자는 Codex에서 GPT-6 계열을 주로 쓰기로 했다. `models_cache.json`의 `gpt-6-sol` 기본 프롬프트는 도구를 쓰기 전에 commentary로 먼저 알리라고 하고(61행), 검색에는 `rg`를 먼저 쓰라고 한다(98행). 그래서 지운 두 줄은 중복이다. 반면 파괴적 명령 금지와 사용자 변경 보존은 GPT-6 기본 프롬프트에 없어서(`gpt-5.6-luna`에는 있었다) AGENTS.md에 남겼다. GPT-6 23행 "Do not request permission again when the user has already authorized an action in an earlier turn"은 "승인은 그 제안에만 적용된다"는 조항과 부딪히므로, 조항에 이유를 붙여 의도한 예외임을 드러냈다. `developer_instructions`의 어조 조항("사용자 메시지의 어조를 모방하지 않고")은 `gpt-5.6-luna`의 "You match the tone…"과 충돌했지만, GPT-6에는 그 문장이 없어 그대로 두었다.
+- **변환 판단**: 이유 구절은 모델과 무관하게 유효하고 git-commit-message는 byte 동일 쌍이라, Claude 규칙과 skill에도 같은 문장을 넣었다. 지운 두 줄은 Codex 기본 프롬프트와의 중복만 정리한 것이다. Claude 쪽 대응 규칙(`response-format.md` §1, `tool-usage.md` §1)은 Claude 하네스에 같은 내용이 없어 유지한다.
+- **검증**: `./check-sync-status`를 통과했다.
+
+### 2026-09-23 — Claude sync에서 claude.ai 동기화 skill 경로 제외 (Codex 미적용)
+
+- **범위**: `claude-config/claude-sync-to-home`에 Claude Code 소유 경로 목록(`skills/synced`, `skills/.trash`)을 두고, 고아 검사·sync 전 백업·빈 디렉터리 정리에서 제외했다. `tests/sync-home.sh`에 이 경로를 보존하는지 확인하는 단언을 추가하고, README의 스크립트 설명에 제외 규칙을 적었다.
+- **판단 근거**: Claude Code 2.1.280은 claude.ai 계정에서 켠 skill을 터미널 세션에서도 `~/.claude/skills/synced/`로 내려받는다(changelog: "Added syncing of the skills and plugins enabled on your claude.ai account to terminal sessions"). 이 머신은 2026-09-23 10:26에 자동 업데이트되면서 파일 207개가 생겼다. sync 스크립트는 `skills/`를 repo가 관리하는 디렉터리로 보므로 이 파일들을 고아로 분류해 삭제를 제안했다. skills 문서가 `synced`라는 이름을 예약해 두었고, 동기화를 끄면 `~/.claude/skills/.trash/`로 옮긴다고 설명하므로 두 경로 모두 하네스 소유로 본다.
+- **변환 판단**: Codex에는 적용하지 않는다. `codex-sync-to-home`은 `~/.agents/skills/`에서 repo에 있는 skill 이름만 다루고, `~/.codex/skills/.system/`은 이미 제외하므로 같은 문제가 없다.
+- **검증**: 스크립트 문법 검사와 `tests/settings-merge.sh`, `tests/sync-home.sh`를 통과했다. 추가한 단언은 이전 스크립트에서 실패하는 것을 확인했다. 실제 홈 대상 dry-run에서도 `skills/synced` 언급이 사라졌다.
+
+### 2026-09-23 — 도구·모델 버전 변경으로 무효가 된 설정 정리 (양쪽 submodule)
+
+- **범위**: Codex `home/config.toml`에서 `commit_attribution`과 `[features] codex_git_commit`을 지웠다. `local/config.override.toml.example`에서는 모델 예시를 `gpt-5-codex`에서 `gpt-6-sol`로, project trust 예시를 `trust_level = "trusted"`로 바꾸고, TOML scope 설명 예시를 `[tui] status_line_use_colors`로 바꿨다. Codex README와 `skill-authoring.md`의 loader 링크는 `codex-rs/ext/skills/src/host_roots.rs`로 고쳤다. Claude `home/statusline-command.sh`에서는 transcript 기반 대체 비용 계산과 가격표를 없애고, `local/settings.override.json.example`의 `Glob`·`Grep` allow 항목을 지웠다.
+- **판단 근거**: Codex 0.156.0에서 `codex doctor`는 `commit_attribution`을 인식하지 못하는 설정으로 보고하고(상류 PR #22412에서 제거), `codex features list`는 `codex_git_commit`을 `removed`로 표시한다. `gpt-5-codex`는 모델 카탈로그에 없고, `trusted = true`는 알 수 없는 필드다. 기존 loader 링크는 404였다. Claude statusline의 대체 가격표는 Opus 5.5(입력 $4, 캐시 읽기 0.05x), Sonnet 5(입력 $2), Fable 5.1(캐시 읽기 0.025x)과 맞지 않았다. 비용은 status JSON의 `cost.total_cost_usd`가 정확하므로, 가격표를 따라 고치는 대신 대체 경로를 없앴다. 2026-08-21 항목에서 transcript 합계를 대체 경로로 남긴 결정은 이번에 대체했다. Linux·macOS·WSL에서는 `Glob`·`Grep`이 기본 도구 목록에 없고, settings의 allow 규칙으로도 되살아나지 않는다(Claude Code tools-reference).
+- **변환 판단**: 두 submodule의 변경은 서로 대응하지 않는다. Claude의 `attribution`은 유효한 설정이라 유지한다. Codex status line은 네이티브 `estimated-thread-cost`를 쓰므로 statusline 변경은 이식 대상이 아니다.
+- **검증**: 두 submodule의 스크립트 문법 검사와 `tests/*.sh`를 모두 통과했다. statusline은 같은 transcript에서 이전 버전과 토큰 합계가 같았고, 이전 형식(v2) 캐시가 남아 있으면 무시하고 처음부터 다시 계산했다. 새 baseline과 예시 값을 합친 Codex 설정은 `codex doctor`에서 인식하지 못하는 설정 경고가 없었다.
+- **홈 적용**: 하지 않았다. `codex-merge-config`는 기존 키를 지우지 않으므로, sync 후에도 `~/.codex/config.toml`에 남은 `commit_attribution`과 `[features] codex_git_commit`은 따로 지워야 한다.
+
 ### 2026-09-11 — Claude 중심 skill·rule·settings 경량화 (skill은 Codex 동시 반영)
 
 - **범위**: 모델과 Claude Code 하네스가 좋아지면서 근거가 사라졌거나 줄여도 되는 조항을 Claude `home/`에서 찾아 정리했다. 짝 사본이 있는 skill은 Codex `home/skills/`도 같이 고쳤고, rule, settings, output style은 Claude에만 반영했다. 커밋 승인 범위 문장만 예외로, 두 도구의 전역 커밋 규칙과 git-commit-message skill 두 사본에 함께 넣었다(아래 "커밋 규칙 보강"). 단위별 감사, 반박 검증, 완결성 검토를 거친 항목 가운데 반박 검증을 통과했거나 사용자가 고른 항목만 반영했다. 1차 반영은 `claude-config@709d333`·`codex-config@6e538b7`에 들어갔고, 2차 반영은 그 뒤 커밋에 들어간다.
@@ -109,7 +142,7 @@
   - handoff: 지식 구분 단계를 의도 복구 단계의 한 항목으로 합치고 단계 번호를 다시 매겼다. Best Practices에서 다른 항목과 겹치는 "Be operational"과 "Be explicit about uncertainty"를 지웠다. 2026-07-24 복구 계약(template 필드, 줄 수보다 복구 가능성 우선, Resume Checklist)은 그대로 둔다.
   - make-plan: 8단계 워크플로를 3단계(위치 결정, 근거 확보, 작성과 보고)로 줄였다. 탐색이 얕아지지 않도록 코드 탐색과 참조 자료 검증 문장은 남겼다.
   - review-pr: 전면 재작성하지 않고 네 곳만 고쳤다. description에서 리뷰 전용 트리거 4개('review this PR' 등)를 빼고 PR 초안 트리거만 남겼다. 초안 전 리뷰는 유지하되 발견 사항을 병합을 막는 문제부터 간결하게 보고하고, 초안을 쓸 때 빌드·테스트는 스스로 돌리지 않는다(아래 "전후 비교 검증과 보완"). 저장소 PR 템플릿이나 `CONTRIBUTING.md`가 있으면 그것을 따르고, 기본 `references/pr-body-template.md`는 Summary·Changed files·Testing·Risk 4개 절로 줄였다. When Not To Use에서 "항상 리뷰부터 한다" 항목은 지웠다.
-- **review-pr 판단 근거**: Codex에서 review-pr를 실제로 부른 5건 중 4건이 PR 초안 요청이었고, 사용자는 더 짧게 써 달라는 요청(7번 중 6번), 변경 파일을 넣어 달라는 요청(3번), 저장소 PR 템플릿 사용을 반복했다. Claude 쪽 리뷰 요청은 내장 `/code-review`와 겹친다. Codex에는 내장 리뷰 명령이 없지만, description 트리거는 암묵 호출에만 영향을 주므로 `$review-pr`로 리뷰를 직접 부를 수 있어 두 사본을 같은 의미로 유지했다. 리뷰 단계를 빼고 초안 전용 skill로 재작성하는 안은 사용자가 리뷰 후 초안 흐름의 가치를 들어 기각했다.
+- **review-pr 판단 근거**: Codex에서 review-pr를 실제로 부른 5건 중 4건이 PR 초안 요청이었고, 사용자는 더 짧게 써 달라는 요청(7번 중 6번), 변경 파일을 넣어 달라는 요청(3번), 저장소 PR 템플릿 사용을 반복했다. Claude 쪽 리뷰 요청은 내장 `/code-review`와 겹친다. Codex에도 내장 `/review`와 `codex review`가 있어 리뷰 요청은 양쪽 모두 내장 기능과 겹친다. 그래도 description 트리거는 암묵 호출에만 영향을 주고 `$review-pr`로 리뷰를 직접 부를 수 있어, 두 사본을 같은 의미로 유지했다(2026-09-27 정정: 처음에는 Codex에 내장 리뷰 명령이 없다고 적었다). 리뷰 단계를 빼고 초안 전용 skill로 재작성하는 안은 사용자가 리뷰 후 초안 흐름의 가치를 들어 기각했다.
 - **전후 비교 검증과 보완**: 축소한 load-handoff와 review-pr가 결과물 품질을 떨어뜨리지 않는지 옛 버전과 새 버전을 같은 입력으로 비교했다. 결론은 두 skill 모두 새 버전을 유지하는 것이고, 되돌린 부분은 없다.
   - 조건: `claude-opus-5`로 읽기 전용 도구만 허용하고 세션 기록을 남기지 않았다. load-handoff는 evofit 저장소에서 버전마다 3회 실행했다. review-pr는 병합 전으로 되돌린 복제본에서 실행했다. voice-exec-app `feat/integrate-skill-shortcuts`와 tinicore-bootstrap `fix/triggered-jobs-next-run-at`(PR 템플릿 있음)은 버전마다 2회, self-evolving-plugin `fix/codex-hook-output-schema`는 버전마다 1회다.
   - load-handoff 결과: 드리프트 탐지와 "다음 행동을 실행하지 않음"은 두 버전이 같았다. 새 버전 응답은 33~47줄로, 이모지와 영어 헤더를 쓰던 옛 버전(58~82줄)보다 읽기 쉬웠다. 다만 새 버전은 3회 모두 성공 기준과 완료·진행·대기 구분을 빠뜨렸고, 1회는 handoff 파일 경로도 빠뜨렸다.
@@ -161,7 +194,7 @@
 ### 2026-09-09 — Claude `settings.json` 권한·env 정리 (Codex 미적용)
 
 - **범위**: Claude의 `home/settings.json`만 바꿨다. `permissions.allow`에서 `Read(./**/*)`와 git 읽기 명령 24개를 제거하고, 스킬(`handoff`·`make-plan`·`review-independently`)이 실행하는 `date` 명령 3개만 남겼다. `permissions.deny`는 33개에서 28개로 정리했다: `.envrc`(`.env*`에 포함)·`*.asc`·`*.cer`·`*.crt`·`*.csr`·`/etc/**`를 제거하고, `.git` 규칙 3개를 `./**/.git/**` 하나로 합치고, `~/.git-credentials`·`~/.npmrc`·`~/.netrc`를 추가했다. `env`에서 `CLAUDE_CODE_DISABLE_ADAPTIVE_THINKING`과 `MAX_THINKING_TOKENS`를 제거했다.
-- **판단 근거**: Claude Code 2.1.266 문서 기준으로, 작업 디렉터리 안의 읽기와 내장 read-only 집합의 git 명령은 어떤 권한 모드에서도 프롬프트가 없어 allow가 동작을 바꾸지 않는다. auto 모드는 작업 디렉터리 읽기를 분류기 없이 승인하므로 비밀 파일을 막는 장치는 deny뿐이라 deny는 중복과 공개 자료(인증서)만 줄였다. 사용자 설정에서 `/etc/**`처럼 슬래시 하나로 시작하는 패턴은 `~/.claude/` 기준으로 해석되어 한 번도 동작한 적이 없었고(`//` 접두사가 파일시스템 루트), 사용자 결정으로 재앵커 대신 삭제했다. 두 env 변수는 Opus 4.6·Sonnet 4.6에만 적용되고 Fable·Sonnet 5·Opus 4.7 이후에는 효력이 없다.
+- **판단 근거**: Claude Code 2.1.266 문서 기준으로, 작업 디렉터리 안의 읽기와 내장 read-only 집합의 git 명령은 어떤 권한 모드에서도 프롬프트가 없어 allow가 동작을 바꾸지 않는다. auto 모드는 작업 디렉터리 읽기를 분류기 없이 승인하므로 비밀 파일을 막는 장치는 deny뿐이라 deny는 중복과 공개 자료(인증서)만 줄였다. 사용자 설정에서 `/etc/**`처럼 슬래시 하나로 시작하는 패턴은 `~/.claude/` 기준으로 해석되어 한 번도 동작한 적이 없었고(`//` 접두사가 파일시스템 루트), 사용자 결정으로 재앵커 대신 삭제했다. `CLAUDE_CODE_DISABLE_ADAPTIVE_THINKING`은 Opus 4.6·Sonnet 4.6에만 적용되고 Fable·Sonnet 5·Opus 4.7 이후에는 효력이 없다. `MAX_THINKING_TOKENS`의 0이 아닌 값은 adaptive reasoning 모델에서 무시되지만, Haiku 4.5 같은 비-adaptive 모델에는 적용된다. 다만 제거한 값 128000은 Claude Code가 최대 출력 토큰보다 1 작게 제한하므로 기본 상한과 같아, 제거해도 동작 차이가 없다(2026-09-27 정정: 처음에는 두 변수 모두 Opus 4.6·Sonnet 4.6에만 적용된다고 적었다).
 - **변환 판단**: Codex에는 적용하지 않는다. 권한 DSL과 thinking env 변수는 [codex-config-from-claude.md](./codex-config-from-claude.md)에 Claude 전용으로 기록된 항목이고, Codex는 자체 rules·sandbox·approval 정책과 모델 reasoning 설정을 쓴다. 대응 항목이 없으므로 드리프트가 아니다.
 - **검증**: `jq empty`와 `claude-config/tests/settings-merge.sh`를 통과했고, `claude-diff-with-home` dry-run에서 예정된 변경만 확인했다. 홈에는 적용하지 않았다. `${VAR}` 확장이 섞인 Bash 명령은 정적 deny 검사를 거치지 않고 auto 모드 분류기로 넘어가 `.git/config` 읽기가 허용되는 것을 확인했는데, 설정으로 막을 수 없는 하네스 동작이라 기록만 남긴다.
 
