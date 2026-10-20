@@ -32,10 +32,12 @@ Once the work target is decided, read the matching doc first and follow its guid
 - **Commit order**: commit in the submodule first → then commit the submodule pointer bump in the parent as a separate commit.
 - The two submodules are versioned independently. Do not port a change from one to the other without conversion. When moving rules/skills between tools, always convert tool names, skill install paths (`~/.claude/skills` ↔ `~/.agents/skills`), and tool-specific capabilities — see [codex-config/skill-authoring.md](./codex-config/skill-authoring.md) for the conversion rules.
 
-## Remotes (mirroring to multiple remotes)
+## Remotes
+
+The parent and both submodules each have a single remote, `origin`.
 
 - **Keep the submodule URLs in `.gitmodules` as relative paths (`../claude-config.git`). Do not revert them to absolute URLs.** If you change a URL, run `git submodule sync` to apply it to the local `.git/config`. (See the README for why relative paths are needed.)
-- **Push the submodules first, then the parent.** To keep multiple remotes (conventionally `origin`/`upstream` — see README) in sync, push to every remote so the mirrors don't diverge (the user may tell you to push only some remotes, so follow their instruction).
+- **Push the submodules first, then the parent**, so the parent never points at submodule commits that `origin` does not have yet.
 
 ## Documentation principles
 

@@ -11,13 +11,13 @@
 
 각 submodule의 디렉터리 구조·스크립트·사용법 등 상세는 **해당 repo의 README**에 있다([claude-config/README.md](./claude-config/README.md), [codex-config/README.md](./codex-config/README.md)). 이 문서는 메타 repo 전체에 공통인 내용만 다룬다.
 
-## 원격 저장소 (여러 곳에 미러링 가능)
+## 원격 저장소
 
-이 저장소는 부모·submodule을 **여러 원격에 동시에 미러링**할 수 있도록 구성돼 있다. 각 원격은 같은 내용의 거울(mirror)이다.
+부모와 두 submodule은 각각 `origin` 원격 하나만 쓴다.
 
-핵심은 `.gitmodules`가 submodule 주소를 **상대 경로(`../claude-config.git`)** 로만 적어 둔다는 점이다. 그래서 git이 "부모 repo를 어느 원격에서 받아왔는지"에 맞춰 submodule 주소를 자동 계산한다 — 호스트별 주소를 따로 적을 필요가 없다.
+`.gitmodules`는 submodule 주소를 **상대 경로(`../claude-config.git`)** 로만 적는다. 그래서 git은 부모 repo를 받아 온 원격 주소를 기준으로 submodule 주소를 계산하고, 호스트별 주소를 따로 적을 필요가 없다. 저장소를 다른 호스트로 옮겨도 `.gitmodules`는 고치지 않아도 된다.
 
-> 여러 원격에 미러링한 경우, 변경을 공유하려면 **부모·submodule 모두 각 원격에 push**해야 거울이 어긋나지 않는다.
+> push는 submodule을 먼저 하고 부모를 나중에 한다. 부모가 원격에 아직 없는 submodule 커밋을 가리키지 않게 하기 위해서다.
 
 ## 클론 및 초기화
 
@@ -29,21 +29,6 @@ git clone --recurse-submodules <parent-repo-url> dev-ai-tools
 
 ```bash
 git submodule update --init --recursive
-```
-
-### 원격을 추가로 연결 (선택)
-
-부모와 각 submodule에 같은 이름의 remote를 추가한다(관례상 처음 클론한 곳을 `origin`, 추가하는 곳을 `upstream`). submodule 주소는 부모와 같은 상대 위치(`../<name>.git`)를 따른다.
-
-```bash
-git remote add upstream <parent-repo-url>
-git -C claude-config remote add upstream <claude-config-url>
-git -C codex-config  remote add upstream <codex-config-url>
-
-# push는 submodule을 먼저, 그다음 부모
-git -C claude-config push origin main && git -C claude-config push upstream main
-git -C codex-config  push origin main && git -C codex-config  push upstream main
-git push origin main && git push upstream main
 ```
 
 ## 작업 흐름
