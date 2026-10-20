@@ -30,12 +30,12 @@
 
 | Skill | 차이 유형 | 차이 내용 / 사유 | 검증 | 최종 점검 |
 |---|---|---|---|---|
-| git-commit-message | 동일 | **자기완결형**: 커밋 형식·언어·승인 규칙을 SKILL.md에 직접 인라인(전역 규칙과 의도적 중복 — 독립성 우선). 워크플로·한국어 응답 템플릿 포함, claude/codex byte 동일 | ✅ | 2026-09-11 |
-| handoff | 변환 | 복구 계약과 template 의미는 동일. 도구 명칭("Claude/Codex instance"), 작성자 prefix `claude-handoff-`↔`codex-handoff-`, 전역 경로 `~/.claude`↔`~/.codex`만 변환. 원 세션 없이도 사용자 의도·결정 근거·검증 상태·불확실성·승인 경계·다음 행동을 복구하는 자기완결형 handoff. 명시 호출 전용 정책은 Claude frontmatter ↔ Codex `agents/openai.yaml`로 변환 | ✅ | 2026-09-11 |
-| load-handoff | 변환 | 복원·drift 검증·resume 권한 계약은 동일. 작성자 prefix·도구 명칭 치환(교차 agent 예시는 반대 prefix), 호출 예시 `/load-handoff`↔`$load-handoff`만 변환. 명시 호출 전용 정책은 Claude frontmatter ↔ Codex `agents/openai.yaml`로 변환 | ✅ | 2026-09-11 |
-| make-plan | 변환 | 플랜 파일 prefix `claude-plan-`↔`codex-plan-`(교차 agent 예시는 반대 prefix)와 세션 명칭만 변환. 본문에 호출 표기가 없어 그 항목은 차이에 해당하지 않는다. 명시 호출 전용 정책은 Claude frontmatter ↔ Codex `agents/openai.yaml`로 변환 | ✅ | 2026-09-11 |
-| review-pr | 변환 | 본문 workflow는 tool-neutral이고 `SKILL.md`의 호출 표기만 `/review-pr`↔`$review-pr`로 다름. `references/` 4종은 byte 동일하며, 생략한 base는 upstream tracking branch가 아니라 remote default branch에서 해석. description 트리거는 PR 초안 요청만 남겼고, 초안은 같은 변경을 리뷰해 병합을 막는 문제부터 보고한 뒤 저장소 PR 템플릿을 우선해 작성 | ✅ | 2026-09-11 |
-| review-independently | 변환 | 범용 독립 검토 workflow는 동일. review 저장을 명시적으로 요청받았을 때의 agent prefix·metadata(`claude-review-`/`claude` ↔ `codex-review-`/`codex`)와 tool home 경로만 변환. 본문에 호출 표기가 없어 그 항목은 차이에 해당하지 않는다. 명시 호출 전용 정책은 Claude frontmatter ↔ Codex `agents/openai.yaml`로 변환 | ✅ | 2026-08-21 |
+| git-commit-message | 동일 | **자기완결형**: 커밋 형식·언어·승인 규칙을 SKILL.md에 직접 인라인(전역 규칙과 의도적 중복 — 독립성 우선). 워크플로·한국어 응답 템플릿 포함, claude/codex byte 동일 | ✅ | 2026-10-21 |
+| handoff | 변환 | 복구 계약과 template 의미는 동일. 도구 명칭("Claude/Codex instance"), 작성자 prefix `claude-handoff-`↔`codex-handoff-`, 전역 경로 `~/.claude`↔`~/.codex`만 변환. 원 세션 없이도 사용자 의도·결정 근거·검증 상태·불확실성·승인 경계·다음 행동을 복구하는 자기완결형 handoff. 원 세션 ID를 적는 문장은 두 사본이 같다(`${CLAUDE_SESSION_ID}`를 쓰고, placeholder로 남으면 `CODEX_THREAD_ID`를 읽는다). 명시 호출 전용 정책은 Claude frontmatter ↔ Codex `agents/openai.yaml`로 변환 | ✅ | 2026-10-21 |
+| load-handoff | 변환 | 복원·drift 검증 계약은 동일하고, resume 요청을 받아도 다음 행동을 제안한 뒤 기다린다. 작성자 prefix·도구 명칭 치환(교차 agent 예시는 반대 prefix)만 변환한다. description에서 호출 예시를 지워 호출 표기 차이는 없다. `@` 참조 문장은 두 사본이 같다. 명시 호출 전용 정책은 Claude frontmatter ↔ Codex `agents/openai.yaml`로 변환 | ✅ | 2026-10-21 |
+| make-plan | 변환 | 플랜 파일 prefix `claude-plan-`↔`codex-plan-`(교차 agent 예시는 반대 prefix)와 세션 명칭만 변환. 본문에 호출 표기가 없어 그 항목은 차이에 해당하지 않는다. plan mode 문장은 두 사본이 같다(Claude는 전용 계획 파일, Codex는 `<proposed_plan>` 블록이 "plan mode가 요구하는 방식"이다). 명시 호출 전용 정책은 Claude frontmatter ↔ Codex `agents/openai.yaml`로 변환 | ✅ | 2026-10-21 |
+| review-pr | 변환 | 본문 workflow는 tool-neutral이고 `SKILL.md`의 호출 표기만 `/review-pr`↔`$review-pr`, "Slash command"↔"Skill command"로 다름. `references/` 4종은 byte 동일. PR 번호·URL과 GitHub에만 있는 브랜치를 읽기 전용 `gh`로 받고, 안 되면 로컬 git, 그것도 안 되면 `gh` 설정을 요청한다. 생략한 base는 upstream tracking branch가 아니라 remote default branch에서 해석. description 트리거는 PR 초안 요청만 남겼고, description만 요청하면 리뷰 보고 없이 가볍게 작성 | ✅ | 2026-10-21 |
+| review-independently | 변환 | 범용 독립 검토 workflow는 동일. review 저장을 명시적으로 요청받았을 때의 agent prefix·metadata(`claude-review-`/`claude` ↔ `codex-review-`/`codex`)와 tool home 경로만 변환. 본문에 호출 표기가 없어 그 항목은 차이에 해당하지 않는다. 명시 호출 전용 정책은 Claude frontmatter ↔ Codex `agents/openai.yaml`로 변환 | ✅ | 2026-10-21 |
 
 ## Rules
 
@@ -62,7 +62,7 @@
 - handoff 템플릿을 `references/handoff-template.md`로 분리하고, 템플릿을 반복하던 Real Example(~100줄)과 중복 bash 절차를 제거 (289줄 → ~50줄).
 - load-handoff에 "handoff 내용을 현재 코드와 대조 검증" 단계 추가 (make-plan의 검증 규칙과 같은 정신).
 - 2026-07-24에는 handoff를 단순 대화 요약이 아니라 **원 세션 없이도 복구 가능한 자기완결형 컨텍스트**로 보강했다. 사용자 목표·성공 기준·명시 제약, 결정과 기각안의 근거, 작성 시점의 branch/`HEAD`/worktree와 검증 결과, session-only context, 사실·추론·미결 질문, 승인 경계, 다음 행동의 성공·중단 조건을 구분해 기록한다. 임의의 줄 수보다 복구 가능성을 우선한다.
-- load-handoff도 같은 구조를 복원하고 기록 상태와 live state의 drift를 구분한다. 단순 load/inspect 요청은 실행 전에 대기하지만, 명시적인 resume/continue 요청은 handoff 범위 안의 안전한 다음 행동을 승인한 것으로 해석하되 기록된 approval gate와 stop condition은 계속 지킨다.
+- load-handoff도 같은 구조를 복원하고 기록 상태와 live state의 drift를 구분한다. 2026-10-21부터는 resume·continue 요청을 받아도 다음 행동을 제안하고 사용자의 승인을 기다린다. 그전에는 명시적인 resume 요청을 handoff 범위 안의 안전한 다음 행동에 대한 승인으로 해석했으나, 사용자 결정으로 바꿨다. handoff에 기록된 승인은 다른 세션에서 받은 것이므로, 승인이 필요한 작업은 다시 묻는다.
 
 ### git-commit-guidelines(rule) + git-commit-message(skill) — 역할 분리
 
@@ -98,6 +98,43 @@
 2026-07-23에는 `make-plan`·`read-review`·`write-review`의 명시 호출 전용 여부를 description 문구에 의존하지 않고 제품별 정책으로 강제했다. Claude는 `SKILL.md` frontmatter의 `disable-model-invocation: true`, Codex는 `agents/openai.yaml`의 `policy.allow_implicit_invocation: false`를 사용한다.
 
 ## 검증 이력
+
+### 2026-10-21 — 새 모델 기준 skill 평가 반영과 review-pr의 PR 조회 지원 (양쪽 submodule)
+
+- **평가 방법**: Claude Code 2.1.304와 Opus 5.5 기준으로 skill 6개를 하나씩 평가했다. 기준은 Claude Code 번들 claude-api skill의 `prompt-audit.md`와, 내장 기능(`code-review`, plan mode, 세션 재개) 및 하네스 지시와 겹치는지 여부다. skill마다 subagent 하나가 평가했고, 영향이 큰 주장(skills 문서의 description 로딩 표, handoff template 펜스, review-pr의 기본 브랜치 동작, 내장 handoff의 정체)은 다시 확인했다. 퇴역할 skill은 없었다. 바이너리의 내장 handoff(`background_handoff`, `desktop_handoff`, `cloud_handoff`)는 세션을 다른 실행 환경으로 옮기는 기능이라 이 skill과 겹치지 않는다.
+- **범위 (양쪽 사본 같은 의미)**:
+  - 명시 호출 전용 skill 3개(handoff, load-handoff, review-independently)의 description을 목적 한 줄로 줄였다. [skills 문서](https://code.claude.com/docs/en/skills)의 표에 따르면 `disable-model-invocation: true` skill은 "Description not in context"라서, 트리거 나열과 "Do NOT use for" 문구가 모델 판단에 쓰이지 않았다.
+  - handoff: template을 감싸는 바깥 펜스를 backtick 4개로 바꿨다. 안쪽에 들여 쓴 닫는 펜스가 바깥 펜스를 143행에서 닫아, Next Action 2부터 끝까지가 template 밖에 있었다(markdown-it로 확인). 4단계에 원 세션 ID를 적는 문장을 넣었고, Resume Checklist 5번은 "Next Action 1을 제안하고 승인을 기다린다"로 바꿨다.
+  - load-handoff: resume·continue 요청에도 다음 행동을 제안하고 기다리며, handoff에 기록된 승인은 다시 묻는다. Report에 Open Questions 항목을 추가했다. template은 이 절을 필수로 정하는데 보고 목록에서 빠져 있었다. 후보 나열 명령을 `ls -lt .handoffs/*/*-handoff-*.md`로 바꿨고, `@` 참조가 "절대 경로로 바뀐다"는 근거 없는 설명을 지웠다.
+  - make-plan: 이 작업의 폴더가 있으면 그 폴더에 새 버전을 쓴다. 이전 규칙은 다른 날 개정하면 새 날짜 폴더를 만들어 이력이 갈라졌다. 폴더는 의미로 찾고, glob은 `ls -d .plans/[0-9][0-9][0-9][0-9][0-9][0-9]-{task-name}/`로 바꿨다. 이전 glob은 `oauth-api-auth`처럼 이름 끝만 같은 폴더도 잡았다. plan mode에서는 계획을 먼저 제시하고, plan mode가 끝난 뒤 파일을 만든다.
+  - review-independently: 2026-08-07 통합 때 없어진 절차를 부정하던 문장 두 개("Do not force a peer-review protocol…", "Do not auto-discover an existing review file…")를 지우고, `.reviews/` 읽기 금지에 통합 때 빠진 이유를 되살렸다.
+  - git-commit-message: 응답 template의 `[file](absolute/path)` 링크를 저장소 기준 상대 경로로 바꿨다. 2026-09-27에 response-format의 링크 규칙을 지운 근거와 같다. 펜스 안에 있던 안내문을 밖으로 옮기고 중복 문장 하나를 지웠으며, Proposed Commit에 `Branch:` 줄을 넣었다.
+  - review-pr: 사용자가 밝힌 용도(다른 사람 PR 리뷰, PR을 올리기 전 셀프 체크, PR description 작성)에 맞춰 다시 썼다.
+    - 버그와 회귀를 먼저 보는 기준은 유지하고, PR 설명과 구현의 대조, 관계없는 변경, 셀프 체크용 잔여물 점검을 더했다.
+    - PR 번호·URL과 GitHub에만 있는 브랜치를 받는다. `gh`는 읽기 전용 하위 명령 6개만 쓰고, 안 되면 로컬 git, 그것도 안 되면 `gh auth login`을 요청한다. checkout하지 않고 `git show <sha>:<path>`로 읽는다.
+    - 기본 브랜치에서 인자 없이 부르면 `main...main` 빈 diff가 되던 문제를 `@{upstream}..HEAD`와 작업 트리 변경을 보도록 고쳤다.
+    - remote가 여럿이면 `--repo`를 넘긴다. `claude-config`에서 `--repo` 없이 실행한 `gh`가 `origin`(github.com) 대신 `upstream`(다른 호스트)을 골랐다.
+    - description만 요청하면 리뷰 보고 없이 가볍게 쓴다. 중복이던 Quick Start 절은 지웠다.
+- **사용자 결정**:
+  - load-handoff는 "무조건 기다리는거고 바로 이어서 작업하는거는 없어". 2026-07-24부터 유지하던 resume 권한 해석을 뒤집었고, 항목별 메모도 고쳤다.
+  - review-pr에서 버그 찾기는 계속 핵심이다("다른 사람 PR을 확인해야되니"). description만 요청하면 가볍게 처리하는 것은, 2026-09-11 보완 3의 "리뷰하면서 초안을 쓴다"를 description 단독 요청에 한해 바꾼 것이다. `draft`를 붙인 요청은 전처럼 리뷰를 먼저 한다.
+  - review-pr description에 리뷰 전용 트리거 문구는 추가하지 않았다. 슬래시 없이 "PR 리뷰해줘"라고 하면 내장 `code-review`가 실행될 수 있지만, `--comment`나 `--fix` 없이는 아무것도 쓰지 않으므로 그대로 두기로 했다.
+  - 다시 쓴 문장을 원문으로 되돌려 review-pr diff를 줄이는 안은 기각했다. 지금 머리말이 세 가지 용도를 명시하기 때문이다.
+  - 브랜치 규칙은 이번에도 넣지 않았다. 전역 규칙에 넣으면 `main`이 보호되는 PR 기반 저장소에서 하네스의 "branch first" 기본값까지 꺼 버린다. 2026-09-27 결정을 유지하고, git-commit-message의 `Branch:` 줄로 커밋 제안에서 브랜치가 드러나게 했다.
+- **변환 판단**:
+  - `check-sync-status`에는 줄 단위 예외가 없어서, 도구마다 동작이 다른 세 문장은 두 사본에서 같은 문장으로 썼다.
+    - handoff 세션 ID 문장은 `${CLAUDE_SESSION_ID}`를 쓰고, placeholder로 남으면 `CODEX_THREAD_ID` 환경 변수를 읽게 한다. 정규화는 대문자 `CLAUDE`/`CODEX`를 바꾸지 않는다.
+    - make-plan의 plan mode 문장은 "plan mode가 요구하는 방식으로 먼저 제시한다"로 썼다. Claude plan mode는 전용 계획 파일을 쓰고, Codex Plan Mode는 파일 쓰기를 금지하고 `<proposed_plan>` 블록을 요구한다(openai/codex `codex-rs/collaboration-mode-templates/templates/plan.md`).
+    - load-handoff의 `@` 문장은 "이미 첨부됐으면 그 내용을 쓴다"는 조건문이다.
+  - Codex가 `codex-config` 변경을 리뷰하면서 `target-resolution.md`의 세 곳을 고쳤다. 첫째, base 브랜치도 새로 fetch하고 fetch가 실패하면 중단한다. 둘째, GitHub에만 있는 브랜치는 `<remote>/<branch>` 대신 `FETCH_HEAD` SHA를 쓴다. single-branch clone에서는 fetch해도 remote-tracking ref가 생기지 않음을 확인했다. 셋째, fetch 조건을 "없거나, 낡았거나, 최신인지 확인이 필요할 때"로 넓혔다. 세 가지 모두 Claude에도 해당하므로 양쪽에 반영했다.
+  - 다만 Codex 버전은 SHA를 셸 변수에 담았다. 두 도구 모두 명령마다 새 셸을 띄우므로 다음 명령에서는 변수가 비고, 그러면 `git show "$sha":<path>`가 `git show :<path>`가 되어 로컬 index를 오류 없이 읽는다(scratch에서 확인). 그래서 `git rev-parse FETCH_HEAD`가 출력한 SHA를 이후 명령에 그대로 적게 바꿨고, `SKILL.md`의 fetch 조건 문장도 같은 뜻으로 맞췄다. Codex는 최종본을 확인했다.
+  - 참고로 `~/.codex/models_cache.json`의 GPT-6 계열 기본 프롬프트 4개에는 "branch"라는 말이 나오지 않는다.
+- **검증**:
+  - `./check-sync-status`가 exit 0으로 끝났다. review-pr `references/` 4종과 git-commit-message `SKILL.md`는 byte 동일하다.
+  - scratch에서 make-plan glob, load-handoff 후보 나열, review-pr의 base·head fetch 순서(로컬로 만든 `refs/pull/1/head`)를 실행해 확인했다.
+  - `claude -p`로 실행한 프로젝트 skill에서 `${CLAUDE_SESSION_ID}`가 그 세션 ID로 치환되는 것을 확인했다. `codex exec`로는 `CODEX_THREAD_ID`가 셸 명령에 전달되고 resume ID와 같은 것을 확인했다.
+  - 실제 GitHub의 `pull/<N>/head`, 사용자 skill 경로(`~/.claude/skills/`)에서의 치환, 바뀐 skill의 실제 실행 결과는 확인하지 않았다.
+- **홈 적용**: 하지 않았다. `claude-diff-with-home`은 이번 skill 변경 외에 `settings.json` 차이도 보고한다. `~/.claude/settings.json`에만 있는 `modelSettings`, `advisorModel`, `skipWorkflowUsageWarning`은 sync하면 사라진다. `modelSettings`는 2026-09-11 유지 결정대로 두고, 나머지 두 값도 사용자 결정으로 같은 방식으로 둔다. 사용자는 두 값이 사라져도 문제가 된 적이 없었다고 했고, 필요하면 `/config`에서 다시 켠다.
 
 ### 2026-09-27 — 새 모델 프롬프트 지침에 맞춰 지시문·skill 정리 (양쪽 submodule)
 
