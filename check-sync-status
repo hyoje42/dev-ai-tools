@@ -5,9 +5,11 @@
 #  file-paired across tools, so only skills are compared here.)
 # Expected DIFFERS entries are intentional tool-specific transforms. Their
 # non-policy files must become identical after normalizing self/other tool
-# names, author prefixes, home paths, and invocation syntax. Any semantic drift,
-# untracked skill, missing pair, unexpected status, missing policy, or missing
-# documentation row is a validation failure.
+# names, author prefixes, home paths, and invocation syntax. Expected ONLY-*
+# entries are skills deliberately kept in one tool; their explicit-only policy
+# is checked on that side alone. Any semantic drift, untracked skill, missing
+# pair, unexpected status, missing policy, or missing documentation row is a
+# validation failure.
 
 set -euo pipefail
 
@@ -18,7 +20,9 @@ SYNC_DOC="$ROOT/docs/skill-sync-status.md"
 
 EXPECTED_IDENTICAL="git-commit-message"
 EXPECTED_DIFFERS="handoff load-handoff make-plan review-independently review-pr"
-EXPLICIT_ONLY="handoff load-handoff make-plan review-independently"
+EXPECTED_CLAUDE_ONLY="draft-prompt"
+EXPECTED_CODEX_ONLY="prompt-redrafter"
+EXPLICIT_ONLY="draft-prompt handoff load-handoff make-plan review-independently"
 failures=0
 
 contains_word() {
@@ -37,6 +41,10 @@ expected_status() {
         printf 'IDENTICAL\n'
     elif contains_word "$name" "$EXPECTED_DIFFERS"; then
         printf 'DIFFERS\n'
+    elif contains_word "$name" "$EXPECTED_CLAUDE_ONLY"; then
+        printf 'ONLY-CLAUDE\n'
+    elif contains_word "$name" "$EXPECTED_CODEX_ONLY"; then
+        printf 'ONLY-CODEX\n'
     else
         printf 'UNTRACKED\n'
     fi
@@ -171,7 +179,9 @@ validate_explicit_only() {
         claude_skill="$CLAUDE_SKILLS/$name/SKILL.md"
         codex_policy="$CODEX_SKILLS/$name/agents/openai.yaml"
 
-        if awk '
+        if contains_word "$name" "$EXPECTED_CODEX_ONLY"; then
+            :
+        elif awk '
             NR == 1 { next }
             /^---$/ { exit }
             $0 == "disable-model-invocation: true" { found = 1 }
@@ -183,7 +193,9 @@ validate_explicit_only() {
             failures=$((failures + 1))
         fi
 
-        if [ -f "$codex_policy" ] &&
+        if contains_word "$name" "$EXPECTED_CLAUDE_ONLY"; then
+            :
+        elif [ -f "$codex_policy" ] &&
            grep -Fxq 'policy:' "$codex_policy" &&
            grep -Fxq '  allow_implicit_invocation: false' "$codex_policy"; then
             printf 'OK            Codex  skills/%s\n' "$name"

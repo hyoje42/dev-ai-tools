@@ -2,7 +2,7 @@
 
 `claude-config/home/`과 `codex-config/home/`의 같은 항목(skill·rule)이 어떤 상태인지 항목별로 기록한다. 각 항목에 대해 (1) 두 도구 버전이 **동일/변환/재작성** 중 무엇인지, (2) 변환됐다면 **무엇이·왜** 다른지, (3) **검증 상태**를 남긴다. 개별 항목에 속하지 않는 **두 submodule 공통의 정합성 결정**(지시 문서의 규칙 귀속 등)은 아래 "검증 이력"에 남긴다.
 
-**기계 검증**: repo 루트의 `./check-sync-status`가 모든 skill 쌍을 비교한다(rule은 2026-06-23 통합으로 비교 대상에서 제외 — 아래 'Rules' 참고). IDENTICAL 항목은 byte 단위 동일성을, DIFFERS 항목은 self/other 도구 명칭·작성자 prefix·홈 경로·호출 문법을 정규화한 뒤 non-policy 파일의 semantic 동일성을 검증한다. Claude frontmatter와 Codex `agents/openai.yaml`의 명시 호출 전용 정책은 별도로 확인한다. 한쪽에만 존재하거나 아래 표에 등록되지 않은 skill, 예상 상태 불일치, 정규화 후 semantic drift, 명시 호출 정책 누락이 있으면 실패한다. 이 문서는 **DIFFERS 항목의 변환 사유 기록**에 집중한다.
+**기계 검증**: repo 루트의 `./check-sync-status`가 모든 skill 쌍을 비교한다(rule은 2026-06-23 통합으로 비교 대상에서 제외 — 아래 'Rules' 참고). IDENTICAL 항목은 byte 단위 동일성을, DIFFERS 항목은 self/other 도구 명칭·작성자 prefix·홈 경로·호출 문법을 정규화한 뒤 non-policy 파일의 semantic 동일성을 검증한다. Claude frontmatter와 Codex `agents/openai.yaml`의 명시 호출 전용 정책은 별도로 확인하며, 단독 skill은 존재하는 쪽만 확인한다. 단독 목록(`EXPECTED_CLAUDE_ONLY`·`EXPECTED_CODEX_ONLY`)에 없는데 한쪽에만 존재하는 skill, 아래 표에 등록되지 않은 skill, 예상 상태 불일치, 정규화 후 semantic drift, 명시 호출 정책 누락이 있으면 실패한다. 이 문서는 **DIFFERS 항목의 변환 사유 기록**에 집중한다.
 
 새로 점검하거나 항목이 바뀌면 이 표와 "검증 이력"을 갱신한다.
 
@@ -23,6 +23,7 @@
 | 동일 | 변환 불필요(tool-neutral). 두 파일이 byte 단위로 같음 |
 | 변환 | 도구명·경로·기능 차이로 **의도적으로** 다름 |
 | 재작성 | 도구 역량 차이로 **구조까지** 다름 |
+| 단독 | 한쪽 도구에만 **의도적으로** 둔다. `check-sync-status`의 단독 목록에 등록하고, 짝 비교는 하지 않는다 |
 
 ## Skills
 
@@ -30,11 +31,13 @@
 
 | Skill | 차이 유형 | 차이 내용 / 사유 | 검증 | 최종 점검 |
 |---|---|---|---|---|
+| draft-prompt | 단독 (Claude) | 아직 시작하지 않은 작업을 세 가지 중 하나로 바꾼다. 맥락이 없는 쪽에 넘길 자기완결형 프롬프트, 이 세션에서 일하기 전의 요구사항 확인, 기존 프롬프트 개선이다. OpenAI `prompt-redrafter`를 포팅하지 않고 새로 설계했으며, 원본에서는 출력 방식(초안 먼저, 질문 1~3개, 코드 블록, 사실 추가 금지)만 가져왔다. 진행 중인 작업의 인계는 handoff가 맡는다. 명시 호출 전용 | ✅ | 2026-10-29 |
 | git-commit-message | 동일 | **자기완결형**: 커밋 형식·언어·승인 규칙을 SKILL.md에 직접 인라인(전역 규칙과 의도적 중복 — 독립성 우선). 워크플로·한국어 응답 템플릿 포함, claude/codex byte 동일 | ✅ | 2026-10-21 |
 | handoff | 변환 | 복구 계약과 template 의미는 동일. 도구 명칭("Claude/Codex instance"), 작성자 prefix `claude-handoff-`↔`codex-handoff-`, 전역 경로 `~/.claude`↔`~/.codex`만 변환. 원 세션 없이도 사용자 의도·결정 근거·검증 상태·불확실성·승인 경계·다음 행동을 복구하는 자기완결형 handoff. 원 세션 ID를 적는 문장은 두 사본이 같다(`${CLAUDE_SESSION_ID}`를 쓰고, placeholder로 남으면 `CODEX_THREAD_ID`를 읽는다). 명시 호출 전용 정책은 Claude frontmatter ↔ Codex `agents/openai.yaml`로 변환 | ✅ | 2026-10-21 |
 | load-handoff | 변환 | 복원·drift 검증 계약은 동일하고, resume 요청을 받아도 다음 행동을 제안한 뒤 기다린다. 작성자 prefix·도구 명칭 치환(교차 agent 예시는 반대 prefix)만 변환한다. description에서 호출 예시를 지워 호출 표기 차이는 없다. `@` 참조 문장은 두 사본이 같다. 명시 호출 전용 정책은 Claude frontmatter ↔ Codex `agents/openai.yaml`로 변환 | ✅ | 2026-10-21 |
 | make-plan | 변환 | 플랜 파일 prefix `claude-plan-`↔`codex-plan-`(교차 agent 예시는 반대 prefix)와 세션 명칭만 변환. 본문에 호출 표기가 없어 그 항목은 차이에 해당하지 않는다. plan mode 문장은 두 사본이 같다(Claude는 전용 계획 파일, Codex는 `<proposed_plan>` 블록이 "plan mode가 요구하는 방식"이다). 명시 호출 전용 정책은 Claude frontmatter ↔ Codex `agents/openai.yaml`로 변환 | ✅ | 2026-10-21 |
 | review-pr | 변환 | 본문 workflow는 tool-neutral이고 `SKILL.md`의 호출 표기만 `/review-pr`↔`$review-pr`, "Slash command"↔"Skill command"로 다름. `references/` 4종은 byte 동일. PR 번호·URL과 GitHub에만 있는 브랜치를 읽기 전용 `gh`로 받고, 안 되면 로컬 git, 그것도 안 되면 `gh` 설정을 요청한다. 생략한 base는 upstream tracking branch가 아니라 remote default branch에서 해석. description 트리거는 PR 초안 요청만 남겼고, description만 요청하면 리뷰 보고 없이 가볍게 작성 | ✅ | 2026-10-21 |
+| prompt-redrafter | 단독 (Codex) | OpenAI [ChatGPT Enterprise Prompting Guide](https://github.com/openai/openai-cookbook/blob/main/examples/chatgpt/chatgpt_prompt_guide/chatgpt_prompt_guide.md)가 배포하는 [zip](https://cdn.openai.com/cookbook/chatgpt-prompt-guide/prompt-redrafter.zip)의 `SKILL.md`와 byte 단위로 같은 사본이다. 원본 갱신을 그대로 따라가려고 수정하지 않으며, `agents/openai.yaml`도 두지 않아 암묵 호출이 가능하다. draft-prompt와 목적은 비슷하지만 모드 구분, 받는 쪽에 맞춘 형식, 검증 기준을 다루는 구조가 달라 쌍으로 묶지 않는다 | ✅ | 2026-10-29 |
 | review-independently | 변환 | 범용 독립 검토 workflow는 동일. review 저장을 명시적으로 요청받았을 때의 agent prefix·metadata(`claude-review-`/`claude` ↔ `codex-review-`/`codex`)와 tool home 경로만 변환. 본문에 호출 표기가 없어 그 항목은 차이에 해당하지 않는다. 명시 호출 전용 정책은 Claude frontmatter ↔ Codex `agents/openai.yaml`로 변환 | ✅ | 2026-10-21 |
 
 ## Rules
@@ -98,6 +101,27 @@
 2026-07-23에는 `make-plan`·`read-review`·`write-review`의 명시 호출 전용 여부를 description 문구에 의존하지 않고 제품별 정책으로 강제했다. Claude는 `SKILL.md` frontmatter의 `disable-model-invocation: true`, Codex는 `agents/openai.yaml`의 `policy.allow_implicit_invocation: false`를 사용한다.
 
 ## 검증 이력
+
+### 2026-10-29 — Claude 단독 skill draft-prompt 추가와 단독 skill 검증 지원 (Claude submodule과 parent)
+
+- **조사**: 거친 요청으로 프롬프트를 만들거나 개선하는 skill을 찾았다. Codex에는 OpenAI [ChatGPT Enterprise Prompting Guide](https://github.com/openai/openai-cookbook/blob/main/examples/chatgpt/chatgpt_prompt_guide/chatgpt_prompt_guide.md)가 배포하는 `prompt-redrafter`가 있다. 로컬 `SKILL.md`가 [zip](https://cdn.openai.com/cookbook/chatgpt-prompt-guide/prompt-redrafter.zip) 안의 파일과 byte 단위로 같은 것을 확인했다. Anthropic 쪽 사정은 다음과 같다.
+  - 공식 [`anthropics/skills`](https://github.com/anthropics/skills)와 공식 플러그인 마켓플레이스에는 대응하는 skill이 없다.
+  - Console의 Prompt Generator와 Prompt Improver, `/v1/experimental/generate_prompt`·`improve_prompt`·`templatize_prompt` API는 legacy Workbench와 함께 2026-08-17에 종료되었다([릴리스 노트](https://platform.claude.com/docs/en/release-notes/overview) 2026-07-17 항목). 옛 문서 URL은 [Prompting best practices](https://platform.claude.com/docs/en/build-with-claude/prompt-engineering/claude-prompting-best-practices)로 리디렉션된다.
+  - 남은 공식 도구는 두 가지다. 하나는 Cookbook의 [Metaprompt 노트북](https://github.com/anthropics/claude-cookbooks/blob/main/misc/metaprompt.ipynb)으로, 단일 턴 템플릿을 만들지만 본문에 `scratchpad`·`inner monologue` 지시가 남아 있다. 다른 하나는 Claude Code 번들 claude-api skill의 `prompt-audit`로, 낡은 패턴을 감사할 뿐 새 프롬프트는 만들지 않는다.
+- **범위**:
+  - `claude-config/home/skills/draft-prompt/SKILL.md`를 추가했다. 세 모드는 받는 쪽에 맞춘 자기완결형 프롬프트 작성, 같은 세션에서 일하기 전의 요구사항 확인, 기존 프롬프트 개선이다. 넘기는 프롬프트에는 완료 기준과 확인 방법을 넣고, 확인 수단이 없으면 없다고 적게 했다. 낡은 패턴 정리는 직접 하지 않고 `/claude-api prompt-audit`를 안내한다.
+  - `check-sync-status`에 `EXPECTED_CLAUDE_ONLY`·`EXPECTED_CODEX_ONLY`를 추가했다. 이전에는 한쪽에만 두는 skill을 허용할 방법이 없어서, 미추적 `prompt-redrafter`가 `ONLY-CODEX`로 검증에 실패하고 있었다. 명시 호출 정책 검사는 단독 skill이면 존재하는 쪽만 본다.
+- **설계 판단**:
+  - redrafter를 포팅하지 않고 새로 만들었다. redrafter는 ChatGPT 사용자가 프롬프트를 한 번 다듬는 용도다. 규칙 상당수("Preserve intent", "Prefer clarity over cleverness" 등)는 `prompt-audit`의 삭제 기준("모델이 이미 아는 내용인가")에 걸리는 일반론이다. 가져온 것은 출력 방식(초안 먼저, 질문 1~3개, 코드 블록, 사실 추가 금지, 단순한 요청은 짧게)뿐이다.
+  - 같은 세션 모드에서는 프롬프트를 쓰지 않는다. 같은 모델이 같은 맥락에서 자기 이해를 다시 써서 성능이 오른다는 근거를 찾지 못했다. 효과는 사용자만 아는 정보를 끌어내는 요구사항 확인에 있다고 봤다. [Claude Code best practices](https://code.claude.com/docs/en/best-practices)의 "구체적인 프롬프트는 Claude가 모르는 정보를 준다", "Give Claude a check to run"과 OpenAI 가이드의 "When not to meta-prompt"가 근거다.
+  - 받는 쪽 형식은 Claude면 XML 태그(Anthropic 모범 사례), Codex·GPT 계열이면 마크다운 섹션(OpenAI 가이드)으로 정했다. 받는 쪽이 정해지지 않으면 다른 Claude 세션을 기본값으로 하고, 그 가정을 밝힌다.
+  - 진행 중인 작업의 인계는 handoff가 맡는다. 이 경계를 draft-prompt `SKILL.md`의 Purpose에 적었다.
+  - Codex `prompt-redrafter`는 원본 갱신을 그대로 따라가려고 수정하지 않았고, 명시 호출 정책도 넣지 않았다.
+- **검증**:
+  - `bash -n check-sync-status`와 `./check-sync-status`가 통과했다(exit 0).
+  - 임시 사본에서 실패 사례 다섯 가지가 모두 exit 1로 잡혔다. 등록하지 않은 한쪽 skill, draft-prompt 문서 행 누락, draft-prompt의 `disable-model-invocation` 누락, Claude 단독 skill이 양쪽에 생긴 경우, Codex 쪽으로 옮겨진 경우다.
+  - draft-prompt를 실제로 호출한 결과는 확인하지 않았다.
+- **홈 적용**: 하지 않았다. `claude-diff-with-home`은 `skills/draft-prompt/SKILL.md` 추가와 `settings.json` 차이를 보고한다. `settings.json` 차이는 키 순서와 `~/.claude/settings.json`에만 있는 `modelSettings`이며, 이번 변경과 관계없다.
 
 ### 2026-10-21 — 새 모델 기준 skill 평가 반영과 review-pr의 PR 조회 지원 (양쪽 submodule)
 
