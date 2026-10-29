@@ -1,5 +1,10 @@
 #!/bin/bash
 
+#   sudo apt update
+#   sudo apt install tmux xclip
+# After syncing, reload the config inside tmux:
+#   tmux source-file ~/.tmux.conf
+
 set -euo pipefail
 
 SRC="$(cd "$(dirname "$0")" && pwd)/.tmux.conf"
