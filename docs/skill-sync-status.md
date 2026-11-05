@@ -31,6 +31,10 @@
 
 | Skill | 차이 유형 | 차이 내용 / 사유 | 검증 | 최종 점검 |
 |---|---|---|---|---|
+| explain-back | 단독 (Codex) | 구현의 현재 상태·동작을 설명하고 사용자의 설명을 코드와 대조해 이해를 확인한다. 자동 호출을 허용한다. 이번 Codex 추가 범위에 맞춰 단독으로 등록했으며, Claude 이식 판단은 아래 검증 이력에 기록했다 | ✅ | 2026-11-05 |
+| spec-brief | 단독 (Codex) | 명세·제공 데이터를 읽어 요구사항, 완료 기준, 해석이 필요한 부분을 정리한다. 읽기 전용 데이터 점검 스크립트를 포함하며 자동 호출을 허용한다. 이번 범위에서는 Claude에 이식하지 않는다 | ✅ | 2026-11-05 |
+| validate-real-inputs | 단독 (Codex) | 실제 입력의 처리 경로, 누락·중복, 재실행·부분 실패를 검증한다. 명시 호출 전용이며, 이번 범위에서는 Claude에 이식하지 않는다 | ✅ | 2026-11-05 |
+| verify-computation | 단독 (Codex) | 손계산·완전탐색·독립 검사기로 계산 결과와 제약 충족 여부를 검증한다. 명시 호출 전용이며, 이번 범위에서는 Claude에 이식하지 않는다 | ✅ | 2026-11-05 |
 | draft-prompt | 단독 (Claude) | 아직 시작하지 않은 작업을 세 가지 중 하나로 바꾼다. 맥락이 없는 쪽에 넘길 자기완결형 프롬프트, 이 세션에서 일하기 전의 요구사항 확인, 기존 프롬프트 개선이다. OpenAI `prompt-redrafter`를 포팅하지 않고 새로 설계했으며, 원본에서는 출력 방식(초안 먼저, 질문 1~3개, 코드 블록, 사실 추가 금지)만 가져왔다. 진행 중인 작업의 인계는 handoff가 맡는다. 명시 호출 전용 | ✅ | 2026-10-29 |
 | git-commit-message | 동일 | **자기완결형**: 커밋 형식·언어·승인 규칙을 SKILL.md에 직접 인라인(전역 규칙과 의도적 중복 — 독립성 우선). 워크플로·한국어 응답 템플릿 포함, claude/codex byte 동일 | ✅ | 2026-10-21 |
 | handoff | 변환 | 복구 계약과 template 의미는 동일. 도구 명칭("Claude/Codex instance"), 작성자 prefix `claude-handoff-`↔`codex-handoff-`, 전역 경로 `~/.claude`↔`~/.codex`만 변환. 원 세션 없이도 사용자 의도·결정 근거·검증 상태·불확실성·승인 경계·다음 행동을 복구하는 자기완결형 handoff. 원 세션 ID를 적는 문장은 두 사본이 같다(`${CLAUDE_SESSION_ID}`를 쓰고, placeholder로 남으면 `CODEX_THREAD_ID`를 읽는다). 명시 호출 전용 정책은 Claude frontmatter ↔ Codex `agents/openai.yaml`로 변환 | ✅ | 2026-10-21 |
@@ -101,6 +105,14 @@
 2026-07-23에는 `make-plan`·`read-review`·`write-review`의 명시 호출 전용 여부를 description 문구에 의존하지 않고 제품별 정책으로 강제했다. Claude는 `SKILL.md` frontmatter의 `disable-model-invocation: true`, Codex는 `agents/openai.yaml`의 `policy.allow_implicit_invocation: false`를 사용한다.
 
 ## 검증 이력
+
+### 2026-11-05 — Codex 스킬 네 개 추가 및 데이터 점검 오류 수정
+
+- **범위**: Codex에 `explain-back`, `spec-brief`, `validate-real-inputs`, `verify-computation`을 추가했다. 앞의 두 스킬은 자동 호출을 허용하고, 뒤의 두 스킬은 `agents/openai.yaml`로 명시 호출만 허용한다.
+- **반대쪽 점검과 이식 판단**: Claude에는 같은 이름의 스킬이 없다. 관련된 `draft-prompt`, `review-independently`, `review-pr`도 확인했다. 각각 요청·프롬프트 정리, 범용 독립 검토, PR 검토를 담당하므로 신규 네 스킬과 동일한 쌍으로 취급하지 않는다. 사용자 요청이 Codex 스킬 검증·수정이므로 이번 변경에서는 Codex 단독으로 유지한다. 도구 기능상 Claude 이식이 불가능하다는 뜻은 아니며, 이식 시에는 호출 정책과 도구 지침을 Claude 형식으로 변환하고 별도로 검증해야 한다.
+- **수정**: `spec-brief/scripts/data_audit.py`에서 TSV 구분자 처리, 여러 줄 CSV의 실제 시작 줄 번호, 잘못된 입력 디렉터리의 오류 종료를 수정했다. `codex-config/tests/test_data_audit.py`에 공개 CLI를 통한 회귀 테스트 7개를 추가했다.
+- **검증**: 네 스킬의 기본 형식 검사와 데이터 점검 회귀 테스트를 통과했다. 부모 `check-sync-status`의 단독 목록과 명시 호출 검사 목록에도 등록했다. 표의 검증 표시는 저장소의 형식·정합성 점검을 뜻하며, 실제 Codex 호출까지 검증했다는 뜻은 아니다. CLI 로딩 검사는 이 환경의 읽기 전용 파일시스템 오류로 완료하지 못했다.
+- **홈 적용**: 하지 않았다. `codex-diff-with-home`에서 네 스킬의 파일 9개가 신규 반영 대상으로 확인됐다.
 
 ### 2026-10-29 — Claude 단독 skill draft-prompt 추가와 단독 skill 검증 지원 (Claude submodule과 parent)
 

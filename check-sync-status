@@ -21,8 +21,8 @@ SYNC_DOC="$ROOT/docs/skill-sync-status.md"
 EXPECTED_IDENTICAL="git-commit-message"
 EXPECTED_DIFFERS="handoff load-handoff make-plan review-independently review-pr"
 EXPECTED_CLAUDE_ONLY="draft-prompt"
-EXPECTED_CODEX_ONLY="prompt-redrafter"
-EXPLICIT_ONLY="draft-prompt handoff load-handoff make-plan review-independently"
+EXPECTED_CODEX_ONLY="explain-back prompt-redrafter spec-brief validate-real-inputs verify-computation"
+EXPLICIT_ONLY="draft-prompt handoff load-handoff make-plan review-independently validate-real-inputs verify-computation"
 failures=0
 
 contains_word() {
