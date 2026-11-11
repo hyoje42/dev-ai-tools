@@ -4,7 +4,7 @@
 
 **기계 검증**: repo 루트의 `./check-sync-status`가 모든 skill 쌍을 비교한다(rule은 2026-06-23 통합으로 비교 대상에서 제외 — 아래 'Rules' 참고). IDENTICAL 항목은 byte 단위 동일성을, DIFFERS 항목은 self/other 도구 명칭·작성자 prefix·홈 경로·호출 문법을 정규화한 뒤 non-policy 파일의 semantic 동일성을 검증한다. Claude frontmatter와 Codex `agents/openai.yaml`의 명시 호출 전용 정책은 별도로 확인하며, 단독 skill은 존재하는 쪽만 확인한다. 단독 목록(`EXPECTED_CLAUDE_ONLY`·`EXPECTED_CODEX_ONLY`)에 없는데 한쪽에만 존재하는 skill, 아래 표에 등록되지 않은 skill, 예상 상태 불일치, 정규화 후 semantic drift, 명시 호출 정책 누락이 있으면 실패한다. 이 문서는 **DIFFERS 항목의 변환 사유 기록**에 집중한다.
 
-`EXPECTED_REWRITTEN`에 등록한 재작성 쌍은 정규화 비교 대신 양쪽 필수 파일을 검사하고, `EXPLICIT_ONLY`에 있으면 호출 정책도 검사한다. 파서 동작의 동등성은 이 검사만으로 보장하지 않으며, 도구별 테스트와 수동 대조 결과를 검증 이력에 기록한다.
+`EXPECTED_REWRITTEN`에 등록한 재작성 쌍은 정규화 비교 대신 스킬별로 지정한 양쪽 필수 파일을 검사하고, `EXPLICIT_ONLY`에 있으면 호출 정책도 검사한다. 동작의 동등성은 이 검사만으로 보장하지 않으며, 도구별 테스트와 수동 대조 결과를 검증 이력에 기록한다.
 
 새로 점검하거나 항목이 바뀌면 이 표와 "검증 이력"을 갱신한다.
 
@@ -42,6 +42,7 @@
 | review-pr | 변환 | 본문 workflow는 tool-neutral이고 `SKILL.md`의 호출 표기만 `/review-pr`↔`$review-pr`, "Slash command"↔"Skill command"로 다름. `references/` 4종은 byte 동일. PR 번호·URL과 GitHub에만 있는 브랜치를 읽기 전용 `gh`로 받고, 안 되면 로컬 git, 그것도 안 되면 `gh` 설정을 요청한다. 생략한 base는 upstream tracking branch가 아니라 remote default branch에서 해석. description 트리거는 PR 초안 요청만 남겼고, description만 요청하면 리뷰 보고 없이 가볍게 작성 | ✅ | 2026-10-21 |
 | prompt-redrafter | 단독 (Codex) | OpenAI [ChatGPT Enterprise Prompting Guide](https://github.com/openai/openai-cookbook/blob/main/examples/chatgpt/chatgpt_prompt_guide/chatgpt_prompt_guide.md)가 배포하는 [zip](https://cdn.openai.com/cookbook/chatgpt-prompt-guide/prompt-redrafter.zip)의 `SKILL.md`와 byte 단위로 같은 사본이다. 원본 갱신을 그대로 따라가려고 수정하지 않으며, `agents/openai.yaml`도 두지 않아 암묵 호출이 가능하다. draft-prompt와 목적은 비슷하지만 모드 구분, 받는 쪽에 맞춘 형식, 검증 기준을 다루는 구조가 달라 쌍으로 묶지 않는다 | ✅ | 2026-10-29 |
 | review-independently | 변환 | 범용 독립 검토 workflow는 동일. review 저장을 명시적으로 요청받았을 때의 agent prefix·metadata(`claude-review-`/`claude` ↔ `codex-review-`/`codex`)와 tool home 경로만 변환. 본문에 호출 표기가 없어 그 항목은 차이에 해당하지 않는다. 명시 호출 전용 정책은 Claude frontmatter ↔ Codex `agents/openai.yaml`로 변환 | ✅ | 2026-10-21 |
+| run-loop | 재작성 | 0~6 단계, in/on 모드, 독립 리뷰와 재작업 한도는 유지한다. Claude Agent·claude-cli를 Codex의 fresh subagent·codex exec로 바꾸고, 호출 정책은 agents/openai.yaml로 변환한다. 질문 도구의 모드·승인 제약, 모델 확인, CLI 샌드박스와 JSONL 이벤트는 Codex 계약을 따른다. Codex 쪽에는 빈 변경 경로의 diff 처리, 실행 권한 감지와 재개 시점 비교를 보강했다. 상세 변환 사유는 검증 이력을 참고한다 | ✅ | 2026-11-11 |
 
 ## Rules
 
@@ -104,6 +105,15 @@
 2026-07-23에는 `make-plan`·`read-review`·`write-review`의 명시 호출 전용 여부를 description 문구에 의존하지 않고 제품별 정책으로 강제했다. Claude는 `SKILL.md` frontmatter의 `disable-model-invocation: true`, Codex는 `agents/openai.yaml`의 `policy.allow_implicit_invocation: false`를 사용한다.
 
 ## 검증 이력
+
+### 2026-11-11 — run-loop의 Codex 이식
+
+- **범위**: Claude의 미커밋 `home/skills/run-loop/`를 원본으로 Codex용 스킬을 추가했다. Claude 원본과 진행 중인 `.gitmodules`·`reference-playbook` 변경은 수정하지 않았다. Codex README와 부모의 쌍 검사·현황 문서도 함께 갱신했다.
+- **유지한 동작**: 계획을 먼저 독립 리뷰하고 스펙 승인을 받은 다음, 구현·5-a 검사·5-b 독립 검증·자동 수정을 수행한다. in 모드의 최종 승인, on 모드의 전제 조건, K/R 재시도 상한, 맥락 변경과 커밋의 별도 승인도 유지한다.
+- **Codex 변환**: `$ARGUMENTS`·`AskUserQuestion`·`subagent_type`·Claude 모델 별칭을 그대로 옮기지 않았다. 실제 도구 스키마에 따라 `fork_turns="none"` 또는 `fork_context=false`로 검토 대화를 분리하고, 질문 도구가 승인 요청을 지원하지 않으면 최종 응답에서 결정을 요청한다. `disable-model-invocation`은 `agents/openai.yaml`의 `allow_implicit_invocation: false`로 변환했다.
+- **CLI·권한**: 로컬 `codex-cli 0.167.0`의 도움말과 OpenAI 공식 [서브에이전트 문서](https://learn.chatgpt.com/docs/agent-configuration/subagents)·[비대화형 실행 문서](https://developers.openai.com/codex/noninteractive)를 확인했다. `codex -a never exec --ephemeral`과 역할별 `read-only`·`workspace-write`를 사용하며, `--json`·`-o`로 결과를 수집한다. 셸 샌드박스가 MCP·앱의 외부 쓰기까지 제한한다고 설명하지 않는다. tmux 표시는 Codex JSONL용으로 재작성했다.
+- **Codex에서 보강한 부분**: 새 파일만 생겼을 때 빈 경로 목록으로 전체 diff를 만들지 않도록 했다. 기본 완료 조건, 승인 전 모델 선택 기준, 실행 권한 변경 감지, 하위 Git 저장소별 스냅샷, 구현 전·Git 외부 작업의 재개, 마지막 검증 시점 이후 변경 대조를 명시했다. 원본에도 적용할 수 있는 개선이지만, 이번 요청은 Codex 이식이고 Claude 사본은 별도 미커밋 작업이므로 자동 역이식하지 않았다.
+- **검증 결과**: 보조 스크립트 테스트 9개, `quick_validate.py`, 로컬 Markdown 참조 검사, `bash -n`, `git diff --check`, `check-sync-status`를 통과했다. 임시 사본에서 필수 참조 누락과 명시 호출 정책 해제를 검사기가 거부하는 것도 확인했다. 독립 에이전트가 네 가지 사용 시나리오를 검토했고, 빈 경로 diff와 완료 조건 누락을 수정한 뒤 재확인했다. 홈 dry-run에는 run-loop 파일 9개 추가와 기존 inspect-session·load-handoff 차이가 표시됐다. 실제 모델 CLI 호출과 전체 작업 루프의 종단 실행은 검증하지 않았으며, 홈 적용과 커밋도 수행하지 않았다.
 
 ### 2026-11-11 — inspect-session 리뷰 후 명령 오탐과 성공 단정 수정
 
