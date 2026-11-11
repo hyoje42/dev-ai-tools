@@ -10,6 +10,8 @@
 # is checked on that side alone. Any semantic drift, untracked skill, missing
 # pair, unexpected status, missing policy, or missing documentation row is a
 # validation failure.
+# Rewritten pairs have independent parsers; validate their required files and
+# policies here, then check behavior with each tool's tests and manual review.
 
 set -euo pipefail
 
@@ -20,9 +22,10 @@ SYNC_DOC="$ROOT/docs/skill-sync-status.md"
 
 EXPECTED_IDENTICAL="git-commit-message"
 EXPECTED_DIFFERS="handoff load-handoff make-plan review-independently review-pr"
+EXPECTED_REWRITTEN="inspect-session"
 EXPECTED_CLAUDE_ONLY="draft-prompt"
 EXPECTED_CODEX_ONLY="prompt-redrafter"
-EXPLICIT_ONLY="draft-prompt handoff load-handoff make-plan review-independently"
+EXPLICIT_ONLY="draft-prompt handoff inspect-session load-handoff make-plan review-independently"
 failures=0
 
 contains_word() {
@@ -39,7 +42,7 @@ expected_status() {
     local name="$1"
     if contains_word "$name" "$EXPECTED_IDENTICAL"; then
         printf 'IDENTICAL\n'
-    elif contains_word "$name" "$EXPECTED_DIFFERS"; then
+    elif contains_word "$name" "$EXPECTED_DIFFERS $EXPECTED_REWRITTEN"; then
         printf 'DIFFERS\n'
     elif contains_word "$name" "$EXPECTED_CLAUDE_ONLY"; then
         printf 'ONLY-CLAUDE\n'
@@ -78,6 +81,23 @@ compare() {
         printf 'ERROR: %s has no row in docs/skill-sync-status.md\n' "$label" >&2
         failures=$((failures + 1))
     fi
+}
+
+validate_rewritten_pairs() {
+    local name side dir rel
+    printf '\n== 도구별로 재작성한 skill ==\n'
+    for name in $EXPECTED_REWRITTEN; do
+        for side in claude codex; do
+            dir="$ROOT/$side-config/home/skills/$name"
+            for rel in SKILL.md scripts/session_digest.py; do
+                if [ ! -s "$dir/$rel" ]; then
+                    printf '오류: %s skills/%s/%s 파일이 없거나 비어 있습니다.\n' "$side" "$name" "$rel" >&2
+                    failures=$((failures + 1))
+                fi
+            done
+        done
+        printf '수동 대조 필요: skills/%s는 파서 구조가 다릅니다. 변환 사유는 docs/skill-sync-status.md를 확인하세요.\n' "$name"
+    done
 }
 
 normalize_skill_file() {
@@ -212,6 +232,7 @@ for name in $( { ls -1 "$CLAUDE_SKILLS" 2>/dev/null; ls -1 "$CODEX_SKILLS" 2>/de
 done
 
 validate_semantic_pairs
+validate_rewritten_pairs
 validate_explicit_only
 
 echo ""

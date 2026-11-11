@@ -4,6 +4,8 @@
 
 **기계 검증**: repo 루트의 `./check-sync-status`가 모든 skill 쌍을 비교한다(rule은 2026-06-23 통합으로 비교 대상에서 제외 — 아래 'Rules' 참고). IDENTICAL 항목은 byte 단위 동일성을, DIFFERS 항목은 self/other 도구 명칭·작성자 prefix·홈 경로·호출 문법을 정규화한 뒤 non-policy 파일의 semantic 동일성을 검증한다. Claude frontmatter와 Codex `agents/openai.yaml`의 명시 호출 전용 정책은 별도로 확인하며, 단독 skill은 존재하는 쪽만 확인한다. 단독 목록(`EXPECTED_CLAUDE_ONLY`·`EXPECTED_CODEX_ONLY`)에 없는데 한쪽에만 존재하는 skill, 아래 표에 등록되지 않은 skill, 예상 상태 불일치, 정규화 후 semantic drift, 명시 호출 정책 누락이 있으면 실패한다. 이 문서는 **DIFFERS 항목의 변환 사유 기록**에 집중한다.
 
+`EXPECTED_REWRITTEN`에 등록한 재작성 쌍은 정규화 비교 대신 양쪽 필수 파일과 호출 정책을 검사한다. 파서 동작의 동등성은 이 검사만으로 보장하지 않으며, 도구별 테스트와 수동 대조 결과를 검증 이력에 기록한다.
+
 새로 점검하거나 항목이 바뀌면 이 표와 "검증 이력"을 갱신한다.
 
 ## 범례
@@ -34,6 +36,7 @@
 | draft-prompt | 단독 (Claude) | 아직 시작하지 않은 작업을 세 가지 중 하나로 바꾼다. 맥락이 없는 쪽에 넘길 자기완결형 프롬프트, 이 세션에서 일하기 전의 요구사항 확인, 기존 프롬프트 개선이다. OpenAI `prompt-redrafter`를 포팅하지 않고 새로 설계했으며, 원본에서는 출력 방식(초안 먼저, 질문 1~3개, 코드 블록, 사실 추가 금지)만 가져왔다. 진행 중인 작업의 인계는 handoff가 맡는다. 명시 호출 전용 | ✅ | 2026-10-29 |
 | git-commit-message | 동일 | **자기완결형**: 커밋 형식·언어·승인 규칙을 SKILL.md에 직접 인라인(전역 규칙과 의도적 중복 — 독립성 우선). 워크플로·한국어 응답 템플릿 포함, claude/codex byte 동일 | ✅ | 2026-10-21 |
 | handoff | 변환 | 복구 계약과 template 의미는 동일. 도구 명칭("Claude/Codex instance"), 작성자 prefix `claude-handoff-`↔`codex-handoff-`, 전역 경로 `~/.claude`↔`~/.codex`만 변환. 원 세션 없이도 사용자 의도·결정 근거·검증 상태·불확실성·승인 경계·다음 행동을 복구하는 자기완결형 handoff. 원 세션 ID를 적는 문장은 두 사본이 같다(`${CLAUDE_SESSION_ID}`를 쓰고, placeholder로 남으면 `CODEX_THREAD_ID`를 읽는다). 명시 호출 전용 정책은 Claude frontmatter ↔ Codex `agents/openai.yaml`로 변환 | ✅ | 2026-10-21 |
+| inspect-session | 재작성 | 목표·결정·진행 상태를 복원하는 목적과 `locate`·`overview`·`timeline`·`show`·`grep` 명령은 같다. Claude의 projects transcript·실행 중 이름 레지스트리 대신 Codex의 sessions/archived_sessions rollout(JSONL·gzip)과 session_index 제목을 사용한다. Codex 파서는 중복 발화 제거, call_id 기반 도구 결과 연결, 압축·되돌리기 처리를 별도로 구현하며, 이벤트 번호는 원본 줄 번호다. 실행 여부는 로그만으로 단정하지 않는다. 후속 작업은 두 도구 모두 사용자가 이 세션에서 다음 행동을 지시했으면 drift를 보고한 뒤 진행하고, skill만 호출했으면 제안하고 기다린다(2026-11-11 사용자 결정). 이전 세션의 승인은 승계하지 않는다. 명시 호출 정책은 Codex `agents/openai.yaml`로 변환했다 | ✅ | 2026-11-11 |
 | load-handoff | 변환 | 복원·drift 검증 계약은 동일하고, resume 요청을 받아도 다음 행동을 제안한 뒤 기다린다. 작성자 prefix·도구 명칭 치환(교차 agent 예시는 반대 prefix)만 변환한다. description에서 호출 예시를 지워 호출 표기 차이는 없다. `@` 참조 문장은 두 사본이 같다. 명시 호출 전용 정책은 Claude frontmatter ↔ Codex `agents/openai.yaml`로 변환 | ✅ | 2026-10-21 |
 | make-plan | 변환 | 플랜 파일 prefix `claude-plan-`↔`codex-plan-`(교차 agent 예시는 반대 prefix)와 세션 명칭만 변환. 본문에 호출 표기가 없어 그 항목은 차이에 해당하지 않는다. plan mode 문장은 두 사본이 같다(Claude는 전용 계획 파일, Codex는 `<proposed_plan>` 블록이 "plan mode가 요구하는 방식"이다). 명시 호출 전용 정책은 Claude frontmatter ↔ Codex `agents/openai.yaml`로 변환 | ✅ | 2026-10-21 |
 | review-pr | 변환 | 본문 workflow는 tool-neutral이고 `SKILL.md`의 호출 표기만 `/review-pr`↔`$review-pr`, "Slash command"↔"Skill command"로 다름. `references/` 4종은 byte 동일. PR 번호·URL과 GitHub에만 있는 브랜치를 읽기 전용 `gh`로 받고, 안 되면 로컬 git, 그것도 안 되면 `gh` 설정을 요청한다. 생략한 base는 upstream tracking branch가 아니라 remote default branch에서 해석. description 트리거는 PR 초안 요청만 남겼고, description만 요청하면 리뷰 보고 없이 가볍게 작성 | ✅ | 2026-10-21 |
@@ -101,6 +104,46 @@
 2026-07-23에는 `make-plan`·`read-review`·`write-review`의 명시 호출 전용 여부를 description 문구에 의존하지 않고 제품별 정책으로 강제했다. Claude는 `SKILL.md` frontmatter의 `disable-model-invocation: true`, Codex는 `agents/openai.yaml`의 `policy.allow_implicit_invocation: false`를 사용한다.
 
 ## 검증 이력
+
+### 2026-11-11 — Codex inspect-session의 실패 판정과 패치 완료 기록 수정
+
+- **재현**: `except ValueError:`·`except sqlite3.Error:`가 실패로 분류되고, 종료 코드 0이나 `isError: false`가 있어도 본문의 오류 문자열 때문에 실패로 바뀌는 현상을 회귀 테스트로 확인했다. `patch_apply_end` 누락과 파일 목록의 생략 개수 미표시도 재현했다.
+- **수정**: JSON 문자열로 감싼 결과도 해석해 종료 코드·오류 필드를 우선한다. 구조화된 결과가 없을 때만 셸 상태 헤더와 오류 표시로 시작하는 짧은 메시지를 검사한다. `patch_apply_end`의 성공·실패·불명 상태와 변경 경로를 보존하고, 타임라인에는 상태와 경로만 표시하며 상세 내용은 `show`로 조회한다. `--files`로 제한한 목록에는 생략 개수를 표시한다.
+- **검증**: `python3 -B codex-config/tests/inspect-session.py`의 12개 테스트가 통과했다. 로컬 `sessions/`의 JSONL·gzip 파일을 디스크 크기순으로 고른 15개에서 도구 결과 7,295건을 비교했으며, 실패 판정은 844건에서 191건으로 줄었다. 감소한 653건 전체를 오탐으로 확정한 것은 아니다. 가장 큰 파일에서 기존에 누락된 패치 완료 기록 312건을 모두 보존했다. 사용자가 검토한 15개 파일의 목록은 받지 않았으므로 사용자 통계와 같은 표본이라는 뜻은 아니다.
+- **도구 간 차이**: 이번 수정은 Codex 결과 envelope와 `patch_apply_end` 형식에 대한 보정이다. Claude 파서에는 이 형식을 이식하지 않았다. 홈 동기화는 수행하지 않는다.
+
+### 2026-11-11 — inspect-session의 Codex 대응 추가
+
+- **변환**: Claude의 세션 탐색과 파서를 그대로 복사하지 않고 Codex rollout 형식에 맞춰 다시 작성했다. `CODEX_HOME`과 `CODEX_THREAD_ID`를 지원하고, 제목은 로컬 `session_index.jsonl`에서 찾는다. 압축된 `.jsonl.gz` 기록과 보관된 세션도 읽는다.
+- **근거**: 이 환경의 최근 Codex 기록에서 `session_meta`, `response_item`, `event_msg/item_completed` 구조와 제목 인덱스의 키를 확인했다. [공식 thread API 문서](https://learn.chatgpt.com/docs/app-server#threads)에서 조회와 재개가 별도 작업임을 확인하고, 로컬 기록이 없을 때 사용할 읽기 전용 조회 방법도 스킬에 명시했다.
+- **동작 차이**: Codex는 중복 저장되는 사용자·assistant 발화를 정리하며, 옵션에 따라 인용 번호가 변하지 않도록 원본 JSONL 줄 번호를 사용한다. 마지막 턴의 완료 여부와 프로세스의 실행 여부를 구분하고, 패치 경로는 변경 시도의 일부 증거로만 표시한다. 마스킹을 적용한 뒤 출력 길이를 제한하거나 검색한다.
+- **승인 범위**: 원본의 다른 세션 승인 불승계 원칙은 유지한다. 후속 작업은 live state를 확인한 뒤 현재 대화에서 이미 승인된 행동이면 진행한다. 이 기준은 2026-11-11 사용자 결정으로 두 도구에 같이 적용했다. skill 호출만으로는 transcript에 적힌 다음 작업을 시작하지 않는다는 문장을 Codex `SKILL.md`에도 넣었다.
+- **검증**: `python3 -B codex-config/tests/inspect-session.py`로 임시 기록을 이용한 8개 동작 테스트를 통과했다. 제목·ID 검색, gzip·보관 경로, 중복 제거, 도구 결과·실패·질문 응답, 압축·되돌리기, 인용 번호 유지, 마스킹, 불완전 기록, 읽기 전용 동작을 확인했다. skill frontmatter 검증과 현재 Codex 세션 기록을 이용한 파싱 점검도 통과했다. 실제 `$inspect-session` 호출은 홈 적용 전이므로 확인하지 않았다.
+- **부모 검사**: `check-sync-status`에서 Claude 단독 등록을 해제하고 재작성 쌍으로 등록했다. 서로 다른 파서에 문자열 정규화 일치를 요구하지 않고, 필수 파일·문서 등록·명시 호출 정책을 검사한다.
+- **검사 범위**: `inspect-session` 쌍과 호출 정책 검사는 통과했다. 전체 검사는 별도 작업으로 추가된 Claude `run-loop`가 예상 목록과 문서에 아직 등록되지 않아 실패했다. 해당 스킬은 이번 작업에서 수정하지 않았다.
+- **홈 적용**: 하지 않았다. `codex-diff-with-home`에서 `~/.agents/skills/inspect-session/`에 들어갈 새 파일 3개를 확인했다.
+
+### 2026-11-11 — Claude skill inspect-session 추가 (Claude submodule과 parent)
+
+- **배경**: 다른 세션(살아 있든 종료됐든)이 무엇을 했는지 파악하고, 필요하면 이어서 작업하려고 만들었다. handoff 파일이 없어도 원본 transcript에서 바로 복원한다.
+- **조사**: 이 머신의 transcript 329개(서브에이전트 273개 별도, 약 150MB)를 집계했다.
+  - 사람이 쓴 메시지는 약 0.3MB, Claude 텍스트 응답은 약 0.6MB다. 나머지는 도구 결과(18.7MB), `attachment`·`api-request*` 같은 주입 기록(약 47MB), `isMeta` 문자열, 대부분 본문이 빈 `thinking`이다.
+  - 사람이 작업 도중 보낸 메시지는 `user` 레코드가 아니라 `attachment`의 `queued_command`로만 남는다. 다른 세션이 보낸 메시지는 `origin.kind == "peer"`이고 `isMeta: true`로 기록된다.
+  - `parentUuid` 분기는 대부분 병렬 도구 호출이고, rewind는 한 건이었다. compact 경계는 `parentUuid: null`과 `logicalParentUuid`로 이어진다.
+  - 세션 이름은 실행 중일 때만 `~/.claude/sessions/<pid>.json`에 남는다. `@` 멘션의 `[ref]`가 무엇에서 나오는지는 확인하지 못했다.
+- **범위**: `claude-config/home/skills/inspect-session/`에 `SKILL.md`와 `scripts/session_digest.py`(표준 라이브러리만 사용)를 추가했다. `check-sync-status`에는 처음에 Claude 단독으로 등록했으나, 커밋 전에 Codex 대응이 추가되어 재작성 쌍(`EXPECTED_REWRITTEN`)과 `EXPLICIT_ONLY`로 등록했다(위 항목).
+- **설계 판단**:
+  - load-handoff를 확장하지 않고 별도 skill로 만들었다. 세션 찾기와 단계별 조회가 handoff 파일 읽기와 성격이 다르다.
+  - 후속 작업은 drift를 먼저 보고한다. 사용자가 이 세션에서 다음 행동을 지시했으면 진행하고, drift 때문에 그 행동이 불분명하거나 위험해질 때만 묻는다. skill만 호출했으면 다음 행동을 제안하고 기다린다. 사용자 결정에 따른 것으로, load-handoff의 "무조건 기다림"과 다르다. load-handoff는 handoff 파일만 보고 이어서 하는 경우이고, 이 skill은 호출할 때 할 일을 함께 지시하는 경우가 많기 때문이다. 다른 세션의 승인은 다시 묻는다.
+  - 사용자 결정으로 명시 호출 전용이다.
+  - 레코드는 파일 순서대로 읽는다. 마지막 레코드에서 조상을 따라가면 병렬 도구 결과가 빠지므로, 조상 경로에 없는 사람 메시지 구간만 `[rewound]`로 표시한다.
+  - transcript 형식은 Claude Code 내부 형식이라 모르는 레코드는 건너뛴다.
+  - 흔한 토큰·키 형식을 가리고 터미널 제어 문자를 지운다. 처음에는 자른 뒤에 가려서, 경계에 걸린 토큰 일부가 `grep`·`timeline` 출력에 드러났다(임시 transcript로 재현). Codex 대응을 검토하며 찾았고, 이벤트를 만들 때 먼저 가리도록 고쳤다.
+- **검증**:
+  - 실제 transcript로 `locate`(ID 앞부분, 제목, 경로, `--here`), `overview`, `timeline`, `show`, `grep`을 실행했다. rewind 표시(`76f408e8`), compact 이후부터 보기(`fe2b127e`), peer 메시지 58건(`70113b2c`), 사용자가 거절한 `AskUserQuestion` 표시(`bf22e1e2`)를 확인했다. 33MB transcript는 0.2초 안에 처리했다.
+  - `./check-sync-status`에서 `inspect-session` 쌍과 명시 호출 정책 검사는 통과했다. 전체 검사는 별도 작업인 Claude `run-loop`가 등록되지 않아 실패한다.
+  - skill을 `/inspect-session`으로 실제 호출한 결과는 확인하지 않았다.
+- **홈 적용**: 하지 않았다.
 
 ### 2026-10-29 — Claude 단독 skill draft-prompt 추가와 단독 skill 검증 지원 (Claude submodule과 parent)
 
