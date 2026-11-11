@@ -25,7 +25,7 @@ EXPECTED_DIFFERS="handoff load-handoff make-plan review-independently review-pr"
 EXPECTED_REWRITTEN="inspect-session"
 EXPECTED_CLAUDE_ONLY="draft-prompt"
 EXPECTED_CODEX_ONLY="prompt-redrafter"
-EXPLICIT_ONLY="draft-prompt handoff inspect-session load-handoff make-plan review-independently"
+EXPLICIT_ONLY="draft-prompt handoff load-handoff make-plan review-independently"
 failures=0
 
 contains_word() {

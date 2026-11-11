@@ -4,7 +4,7 @@
 
 **기계 검증**: repo 루트의 `./check-sync-status`가 모든 skill 쌍을 비교한다(rule은 2026-06-23 통합으로 비교 대상에서 제외 — 아래 'Rules' 참고). IDENTICAL 항목은 byte 단위 동일성을, DIFFERS 항목은 self/other 도구 명칭·작성자 prefix·홈 경로·호출 문법을 정규화한 뒤 non-policy 파일의 semantic 동일성을 검증한다. Claude frontmatter와 Codex `agents/openai.yaml`의 명시 호출 전용 정책은 별도로 확인하며, 단독 skill은 존재하는 쪽만 확인한다. 단독 목록(`EXPECTED_CLAUDE_ONLY`·`EXPECTED_CODEX_ONLY`)에 없는데 한쪽에만 존재하는 skill, 아래 표에 등록되지 않은 skill, 예상 상태 불일치, 정규화 후 semantic drift, 명시 호출 정책 누락이 있으면 실패한다. 이 문서는 **DIFFERS 항목의 변환 사유 기록**에 집중한다.
 
-`EXPECTED_REWRITTEN`에 등록한 재작성 쌍은 정규화 비교 대신 양쪽 필수 파일과 호출 정책을 검사한다. 파서 동작의 동등성은 이 검사만으로 보장하지 않으며, 도구별 테스트와 수동 대조 결과를 검증 이력에 기록한다.
+`EXPECTED_REWRITTEN`에 등록한 재작성 쌍은 정규화 비교 대신 양쪽 필수 파일을 검사하고, `EXPLICIT_ONLY`에 있으면 호출 정책도 검사한다. 파서 동작의 동등성은 이 검사만으로 보장하지 않으며, 도구별 테스트와 수동 대조 결과를 검증 이력에 기록한다.
 
 새로 점검하거나 항목이 바뀌면 이 표와 "검증 이력"을 갱신한다.
 
@@ -36,8 +36,8 @@
 | draft-prompt | 단독 (Claude) | 아직 시작하지 않은 작업을 세 가지 중 하나로 바꾼다. 맥락이 없는 쪽에 넘길 자기완결형 프롬프트, 이 세션에서 일하기 전의 요구사항 확인, 기존 프롬프트 개선이다. OpenAI `prompt-redrafter`를 포팅하지 않고 새로 설계했으며, 원본에서는 출력 방식(초안 먼저, 질문 1~3개, 코드 블록, 사실 추가 금지)만 가져왔다. 진행 중인 작업의 인계는 handoff가 맡는다. 명시 호출 전용 | ✅ | 2026-10-29 |
 | git-commit-message | 동일 | **자기완결형**: 커밋 형식·언어·승인 규칙을 SKILL.md에 직접 인라인(전역 규칙과 의도적 중복 — 독립성 우선). 워크플로·한국어 응답 템플릿 포함, claude/codex byte 동일 | ✅ | 2026-10-21 |
 | handoff | 변환 | 복구 계약과 template 의미는 동일. 도구 명칭("Claude/Codex instance"), 작성자 prefix `claude-handoff-`↔`codex-handoff-`, 전역 경로 `~/.claude`↔`~/.codex`만 변환. 원 세션 없이도 사용자 의도·결정 근거·검증 상태·불확실성·승인 경계·다음 행동을 복구하는 자기완결형 handoff. 원 세션 ID를 적는 문장은 두 사본이 같다(`${CLAUDE_SESSION_ID}`를 쓰고, placeholder로 남으면 `CODEX_THREAD_ID`를 읽는다). 명시 호출 전용 정책은 Claude frontmatter ↔ Codex `agents/openai.yaml`로 변환 | ✅ | 2026-10-21 |
-| inspect-session | 재작성 | 목표·결정·진행 상태를 복원하는 목적과 `locate`·`overview`·`timeline`·`show`·`grep` 명령은 같다. Claude의 projects transcript·실행 중 이름 레지스트리 대신 Codex의 sessions/archived_sessions rollout(JSONL·gzip)과 session_index 제목을 사용한다. Codex 파서는 중복 발화 제거, call_id 기반 도구 결과 연결, 압축·되돌리기 처리를 별도로 구현하며, 이벤트 번호는 원본 줄 번호다. 실행 여부는 로그만으로 단정하지 않는다. 후속 작업은 두 도구 모두 사용자가 이 세션에서 다음 행동을 지시했으면 drift를 보고한 뒤 진행하고, skill만 호출했으면 제안하고 기다린다(2026-11-11 사용자 결정). 이전 세션의 승인은 승계하지 않는다. 명시 호출 정책은 Codex `agents/openai.yaml`로 변환했다 | ✅ | 2026-11-11 |
-| load-handoff | 변환 | 복원·drift 검증 계약은 동일하고, resume 요청을 받아도 다음 행동을 제안한 뒤 기다린다. 작성자 prefix·도구 명칭 치환(교차 agent 예시는 반대 prefix)만 변환한다. description에서 호출 예시를 지워 호출 표기 차이는 없다. `@` 참조 문장은 두 사본이 같다. 명시 호출 전용 정책은 Claude frontmatter ↔ Codex `agents/openai.yaml`로 변환 | ✅ | 2026-10-21 |
+| inspect-session | 재작성 | 목표·결정·진행 상태를 복원하는 목적과 `locate`·`overview`·`timeline`·`show`·`grep` 명령은 같다. Claude의 projects transcript·실행 중 이름 레지스트리 대신 Codex의 sessions/archived_sessions rollout(JSONL·gzip)과 session_index 제목을 사용한다. Codex 파서는 중복 발화 제거, call_id 기반 도구 결과 연결, 압축·되돌리기 처리를 별도로 구현하며, 이벤트 번호는 원본 줄 번호다. 실행 여부는 로그만으로 단정하지 않는다. 후속 작업은 두 도구 모두 사용자가 이 세션에서 다음 행동을 지시했으면 drift를 보고한 뒤 진행하고, skill만 호출했으면 제안하고 기다린다(2026-11-11 사용자 결정). 이전 세션의 승인은 승계하지 않는다. load-handoff가 원래 세션을 조회할 때 쓸 수 있도록 두 도구 모두 자동 호출을 허용한다(2026-11-11 사용자 결정). overview는 같은 토큰 검사로 git·sync 명령 후보를 찾고, 조건식을 보존한 전체 셸 호출과 호출 단위 결과를 보여 준다. 개별 명령의 실행·성공은 단정하지 않는다. subagent 보고의 harness 고정 문구 제거는 Claude만 한다(Codex는 `<subagent_notification>`으로 따로 기록) | ✅ | 2026-11-11 |
+| load-handoff | 변환 | 복원·drift 검증 계약은 동일하다. 기본은 다음 행동을 제안하고 기다리며, 사용자가 이 세션에서 계속하라고 하거나 다음 행동을 지시했으면 drift를 보고한 뒤 진행한다. 원래 세션 ID가 있고 빈 곳을 채워야 하면 inspect-session으로 조회한다. 작성자 prefix·도구 명칭 치환(교차 agent 예시는 반대 prefix)만 변환한다. description에서 호출 예시를 지워 호출 표기 차이는 없다. `@` 참조 문장은 두 사본이 같다. 명시 호출 전용 정책은 Claude frontmatter ↔ Codex `agents/openai.yaml`로 변환 | ✅ | 2026-11-11 |
 | make-plan | 변환 | 플랜 파일 prefix `claude-plan-`↔`codex-plan-`(교차 agent 예시는 반대 prefix)와 세션 명칭만 변환. 본문에 호출 표기가 없어 그 항목은 차이에 해당하지 않는다. plan mode 문장은 두 사본이 같다(Claude는 전용 계획 파일, Codex는 `<proposed_plan>` 블록이 "plan mode가 요구하는 방식"이다). 명시 호출 전용 정책은 Claude frontmatter ↔ Codex `agents/openai.yaml`로 변환 | ✅ | 2026-10-21 |
 | review-pr | 변환 | 본문 workflow는 tool-neutral이고 `SKILL.md`의 호출 표기만 `/review-pr`↔`$review-pr`, "Slash command"↔"Skill command"로 다름. `references/` 4종은 byte 동일. PR 번호·URL과 GitHub에만 있는 브랜치를 읽기 전용 `gh`로 받고, 안 되면 로컬 git, 그것도 안 되면 `gh` 설정을 요청한다. 생략한 base는 upstream tracking branch가 아니라 remote default branch에서 해석. description 트리거는 PR 초안 요청만 남겼고, description만 요청하면 리뷰 보고 없이 가볍게 작성 | ✅ | 2026-10-21 |
 | prompt-redrafter | 단독 (Codex) | OpenAI [ChatGPT Enterprise Prompting Guide](https://github.com/openai/openai-cookbook/blob/main/examples/chatgpt/chatgpt_prompt_guide/chatgpt_prompt_guide.md)가 배포하는 [zip](https://cdn.openai.com/cookbook/chatgpt-prompt-guide/prompt-redrafter.zip)의 `SKILL.md`와 byte 단위로 같은 사본이다. 원본 갱신을 그대로 따라가려고 수정하지 않으며, `agents/openai.yaml`도 두지 않아 암묵 호출이 가능하다. draft-prompt와 목적은 비슷하지만 모드 구분, 받는 쪽에 맞춘 형식, 검증 기준을 다루는 구조가 달라 쌍으로 묶지 않는다 | ✅ | 2026-10-29 |
@@ -68,7 +68,7 @@
 - handoff 템플릿을 `references/handoff-template.md`로 분리하고, 템플릿을 반복하던 Real Example(~100줄)과 중복 bash 절차를 제거 (289줄 → ~50줄).
 - load-handoff에 "handoff 내용을 현재 코드와 대조 검증" 단계 추가 (make-plan의 검증 규칙과 같은 정신).
 - 2026-07-24에는 handoff를 단순 대화 요약이 아니라 **원 세션 없이도 복구 가능한 자기완결형 컨텍스트**로 보강했다. 사용자 목표·성공 기준·명시 제약, 결정과 기각안의 근거, 작성 시점의 branch/`HEAD`/worktree와 검증 결과, session-only context, 사실·추론·미결 질문, 승인 경계, 다음 행동의 성공·중단 조건을 구분해 기록한다. 임의의 줄 수보다 복구 가능성을 우선한다.
-- load-handoff도 같은 구조를 복원하고 기록 상태와 live state의 drift를 구분한다. 2026-10-21부터는 resume·continue 요청을 받아도 다음 행동을 제안하고 사용자의 승인을 기다린다. 그전에는 명시적인 resume 요청을 handoff 범위 안의 안전한 다음 행동에 대한 승인으로 해석했으나, 사용자 결정으로 바꿨다. handoff에 기록된 승인은 다른 세션에서 받은 것이므로, 승인이 필요한 작업은 다시 묻는다.
+- load-handoff도 같은 구조를 복원하고 기록 상태와 live state의 drift를 구분한다. 2026-10-21부터 resume·continue 요청을 받아도 다음 행동을 제안하고 기다리게 했다. 2026-11-11 사용자 결정으로 다시 바꿔, 기본은 제안하고 기다리되 사용자가 이 세션에서 계속하라고 하거나 다음 행동을 지시했으면 drift를 보고한 뒤 진행한다. skill 호출만으로는 시작하지 않는다. handoff에 기록된 승인은 다른 세션에서 받은 것이므로, 승인이 필요한 작업은 다시 묻는다.
 
 ### git-commit-guidelines(rule) + git-commit-message(skill) — 역할 분리
 
@@ -104,6 +104,25 @@
 2026-07-23에는 `make-plan`·`read-review`·`write-review`의 명시 호출 전용 여부를 description 문구에 의존하지 않고 제품별 정책으로 강제했다. Claude는 `SKILL.md` frontmatter의 `disable-model-invocation: true`, Codex는 `agents/openai.yaml`의 `policy.allow_implicit_invocation: false`를 사용한다.
 
 ## 검증 이력
+
+### 2026-11-11 — inspect-session 리뷰 후 명령 오탐과 성공 단정 수정
+
+- Codex는 셸 실행 도구만 검사하고, 양쪽 파서는 인용 문자열·주석·heredoc 본문을 명령으로 해석하지 않도록 바꿨다. 조건식을 보존해 전체 호출 결과와 개별 명령의 실행 여부를 구분한다.
+- Codex는 종료 코드가 없는 결과를 완료로 간주하지 않으며, Claude는 backgroundTaskId·interrupted 기록을 별도로 표시한다. 도구별 결과 형식의 차이는 유지했다.
+- 임시 기록으로 Codex 테스트 15개와 Claude 테스트 4개를 통과했다. 패치·인용 문자열 오탐, 실행되지 않은 조건부 명령, 실행 중인 호출을 포함한다. run-loop는 사용자 요청에 따라 이번 검토에서 제외했다. 홈에는 적용하지 않았다.
+
+### 2026-11-11 — inspect-session 자동 호출 허용, load-handoff 연계와 진행 기준 변경 (양쪽 submodule과 parent)
+
+- **배경**: `/inspect-session`을 처음 실제로 호출해 `f5d2b678` 세션을 복원한 뒤, 사용자와 결과를 검토했다. 그 자리에서 사용자가 세 가지를 결정했다.
+- **결정 1, load-handoff 진행 기준**: "기본이 기다리라는거지 명시적 지시가 있으면 따르지 않을 이유는 없어." 2026-10-21에 정한 "무조건 기다림"을 바꿨다. 기본은 제안하고 기다리고, 사용자가 이 세션에서 계속하라고 하거나 다음 행동을 지시했으면 drift를 보고한 뒤 진행한다. 다른 세션의 승인은 계속 다시 묻는다. 두 사본에 같은 문장을 넣었다.
+- **결정 2, inspect-session 자동 호출 허용**: load-handoff가 handoff에 기록된 원래 세션을 조회할 때 inspect-session을 쓰도록 했다. 명시 호출 전용이면 모델이 skill을 부를 수 없으므로 Claude의 `disable-model-invocation`과 Codex의 `agents/openai.yaml`을 지우고, `EXPLICIT_ONLY`에서도 뺐다. 자동 호출이 되면 description이 매 세션 skill 목록에 들어가므로 사용 조건을 description에 적었다. load-handoff 2단계에는 빈 곳을 채울 때만 inspect-session으로 조회한다는 문장을 넣었다.
+- **결정 3, 첫 사용에서 찾은 약점 보완**:
+  - overview가 Write/Edit만 세어서, Bash로 한 커밋·push·sync가 보이지 않았다. 셸 명령을 `&&`·`;`·`|` 단위로 나누고 heredoc 본문(커밋 메시지)은 건너뛴 뒤, 상태를 바꾸는 git·sync 명령과 성공 여부를 보여 준다. 처음 만든 정규식은 Codex 실제 기록에서 `merge-base`·`checkout-index`·`stash list`·`tag --points-at`를 잘못 잡아서, 명령 이름 뒤 경계와 읽기 전용 하위 명령을 구분하도록 고쳤다. 두 스크립트가 같은 정규식을 쓴다.
+  - Claude peer 이벤트 미리보기를 subagent 보고의 harness 고정 문구가 차지했다. 이 문구를 떼고 `(subagent report)` 표시를 붙인다. Codex에는 이 문구가 없어서 적용하지 않았다.
+  - "파악만" 할 때도 `HEAD`, worktree, 기록된 커밋·push·sync가 그대로인지 읽기 전용으로 확인한다. 첫 사용에서 기록에는 "sync 안 함"이었지만 실제로는 홈에 적용돼 있었다.
+  - 보고 분량을 질문 크기에 맞춘다. 좁은 질문에는 짧게 답하고, 전체 파악이나 후속 작업일 때만 모든 항목을 채운다. 다른 skill에서 불렸으면 그 skill에 필요한 답만 돌려준다.
+- **검증**: `python3 -B codex-config/tests/inspect-session.py`에 state ops 회귀 테스트 1개를 더했고 13개 모두 통과했다. 두 스크립트의 판정을 17개 명령 예시로 확인했다. Claude 스크립트로 `f5d2b678`의 overview를 다시 만들어 커밋 4건과 push 1건이 나오는 것을 확인했다. Claude 큰 transcript 8개와 Codex 큰 rollout 5개도 오류 없이 처리했다. `./check-sync-status`는 별도 작업인 Claude `run-loop` 미등록 2건만 실패하고, load-handoff 정규화 비교와 나머지 정책 검사는 통과했다. 자동 호출이 실제로 일어나는지는 홈 적용 전이라 확인하지 않았다.
+- **홈 적용**: 하지 않았다.
 
 ### 2026-11-11 — Codex inspect-session의 실패 판정과 패치 완료 기록 수정
 
