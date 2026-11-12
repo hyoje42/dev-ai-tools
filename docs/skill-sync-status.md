@@ -42,7 +42,7 @@
 | review-pr | 변환 | 본문 workflow는 tool-neutral이고 `SKILL.md`의 호출 표기만 `/review-pr`↔`$review-pr`, "Slash command"↔"Skill command"로 다름. `references/` 4종은 byte 동일. PR 번호·URL과 GitHub에만 있는 브랜치를 읽기 전용 `gh`로 받고, 안 되면 로컬 git, 그것도 안 되면 `gh` 설정을 요청한다. 생략한 base는 upstream tracking branch가 아니라 remote default branch에서 해석. description 트리거는 PR 초안 요청만 남겼고, description만 요청하면 리뷰 보고 없이 가볍게 작성 | ✅ | 2026-10-21 |
 | prompt-redrafter | 단독 (Codex) | OpenAI [ChatGPT Enterprise Prompting Guide](https://github.com/openai/openai-cookbook/blob/main/examples/chatgpt/chatgpt_prompt_guide/chatgpt_prompt_guide.md)가 배포하는 [zip](https://cdn.openai.com/cookbook/chatgpt-prompt-guide/prompt-redrafter.zip)의 `SKILL.md`와 byte 단위로 같은 사본이다. 원본 갱신을 그대로 따라가려고 수정하지 않으며, `agents/openai.yaml`도 두지 않아 암묵 호출이 가능하다. draft-prompt와 목적은 비슷하지만 모드 구분, 받는 쪽에 맞춘 형식, 검증 기준을 다루는 구조가 달라 쌍으로 묶지 않는다 | ✅ | 2026-10-29 |
 | review-independently | 변환 | 범용 독립 검토 workflow는 동일. review 저장을 명시적으로 요청받았을 때의 agent prefix·metadata(`claude-review-`/`claude` ↔ `codex-review-`/`codex`)와 tool home 경로만 변환. 본문에 호출 표기가 없어 그 항목은 차이에 해당하지 않는다. 명시 호출 전용 정책은 Claude frontmatter ↔ Codex `agents/openai.yaml`로 변환 | ✅ | 2026-10-21 |
-| run-loop | 재작성 | 0~6 단계, in/on 모드, 독립 리뷰와 재작업 한도는 유지한다. Claude Agent·claude-cli를 Codex의 fresh subagent·codex exec로 바꾸고, 호출 정책은 agents/openai.yaml로 변환한다. 질문 도구의 모드·승인 제약, 모델 확인, CLI 샌드박스와 JSONL 이벤트는 Codex 계약을 따른다. Codex 쪽에는 빈 변경 경로의 diff 처리, 실행 권한 감지와 재개 시점 비교를 보강했다. 상세 변환 사유는 검증 이력을 참고한다 | ✅ | 2026-11-11 |
+| run-loop | 재작성 | 0~6 단계, in/on 모드, 독립 리뷰와 재작업 한도는 유지한다. Claude Agent·claude-cli를 Codex의 fresh subagent·codex exec로 바꾸고, 호출 정책은 agents/openai.yaml로 변환한다. 질문 도구의 모드·승인 제약, 모델 확인, CLI 샌드박스와 JSONL 이벤트는 Codex 계약을 따른다. Codex 쪽에는 빈 변경 경로의 diff 처리, 실행 권한 감지와 재개 시점 비교를 보강했다. 상세 변환 사유는 검증 이력을 참고한다. 2026-11-11 Claude 쪽 종단 테스트 뒤에 바꾼 호출 방식·역할 이름·무결성 범위는 Codex에 아직 반영하지 않았다 | ⏳ | 2026-11-11 |
 
 ## Rules
 
@@ -105,6 +105,15 @@
 2026-07-23에는 `make-plan`·`read-review`·`write-review`의 명시 호출 전용 여부를 description 문구에 의존하지 않고 제품별 정책으로 강제했다. Claude는 `SKILL.md` frontmatter의 `disable-model-invocation: true`, Codex는 `agents/openai.yaml`의 `policy.allow_implicit_invocation: false`를 사용한다.
 
 ## 검증 이력
+
+### 2026-11-11 — run-loop 종단 테스트 뒤 Claude 사본 수정 (Codex 미반영)
+
+- **범위**: 사용자 요청에 따라 Claude의 `home/skills/run-loop/`만 수정했다. Codex 사본은 건드리지 않았으므로 아래 항목이 두 사본 사이의 차이로 남아 있다.
+- **호출 방식과 이름**: `역할.항목=값` 인자를 없애고, 역할 설정은 호출 문장이나 스펙 승인 화면에서 말로 요청하게 했다. `reviewer-5b`는 `verifier`로, `--on`과 on 모드는 `--auto`와 auto 모드로 바꿨다. Codex는 여전히 `reviewer-5b`, `--on`, 인자 문법을 쓴다.
+- **5-b 변경 묶음과 재개**: 추적 파일 변경이 없거나 커밋이 없는 저장소에서는 빈 diff를 쓰게 했고, 실행 권한 변경을 스냅샷에 넣었으며, 검증을 통과한 시점의 `logs/latest.snap`과 비교해 재개하게 했다. Codex가 먼저 보강한 세 항목을 Claude 방식으로 옮긴 것이다. Codex는 `post.snap`이라는 이름을 쓴다.
+- **테스트에서 나온 수정**: 게이트 부산물을 변경 목록에서 빼는 규칙, runner별 읽기 전용 문장, 스펙을 다시 승인하면 R을 다시 세는 규칙, 조율자가 roster 값을 스스로 고르지 않는 규칙, 조율자가 만든 게이트 파일과 판정 증거를 두는 `gates/`·`evidence/` 폴더와 그 해시, `5a-result.md`에 명령 전문 기록, 단계 표시 누락 방지, 템플릿의 `## Limits` 절을 넣었다.
+- **검증 결과**: 사용자가 연습 저장소 세 곳에서 `/run-loop`를 직접 입력해 [0]~[6]을 돌렸다. `--auto` 조건 미달 시 in 모드 전환, 말로 한 역할 설정의 해석, claude-cli 검증자(`claude-sonnet-5-5`)와 빈 diff 처리, 계획 리뷰 2라운드 실패 뒤 재리뷰 없는 반영을 확인했다. `tree_snapshot.sh`는 임시 저장소에서 실행 권한·`gates/`·`evidence/` 변경 감지를 확인했고, `./check-sync-status`는 통과했다. 마지막 수정분(`gates/`·`evidence/`, roster 값 규칙, 단계 표시)과 K·R 한도 초과, 재개, auto 모드 정상 경로는 루프로 돌려 보지 않았다.
+- **Codex에 남은 일**: 위 항목을 Codex 계약에 맞게 변환해야 한다. 이름과 호출 방식, R 규칙, `gates/`·`evidence/` 해시는 그대로 옮길 수 있고, runner별 읽기 전용 문장은 `codex exec`의 샌드박스 모드에 맞춰 다시 써야 한다.
 
 ### 2026-11-11 — inspect-session의 git·sync 명령 누락과 overview 목록 제한 수정
 
