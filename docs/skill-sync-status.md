@@ -42,7 +42,7 @@
 | review-pr | 변환 | 본문 workflow는 tool-neutral이고 `SKILL.md`의 호출 표기만 `/review-pr`↔`$review-pr`, "Slash command"↔"Skill command"로 다름. `references/` 4종은 byte 동일. PR 번호·URL과 GitHub에만 있는 브랜치를 읽기 전용 `gh`로 받고, 안 되면 로컬 git, 그것도 안 되면 `gh` 설정을 요청한다. 생략한 base는 upstream tracking branch가 아니라 remote default branch에서 해석. description 트리거는 PR 초안 요청만 남겼고, description만 요청하면 리뷰 보고 없이 가볍게 작성 | ✅ | 2026-10-21 |
 | prompt-redrafter | 단독 (Codex) | OpenAI [ChatGPT Enterprise Prompting Guide](https://github.com/openai/openai-cookbook/blob/main/examples/chatgpt/chatgpt_prompt_guide/chatgpt_prompt_guide.md)가 배포하는 [zip](https://cdn.openai.com/cookbook/chatgpt-prompt-guide/prompt-redrafter.zip)의 `SKILL.md`와 byte 단위로 같은 사본이다. 원본 갱신을 그대로 따라가려고 수정하지 않으며, `agents/openai.yaml`도 두지 않아 암묵 호출이 가능하다. draft-prompt와 목적은 비슷하지만 모드 구분, 받는 쪽에 맞춘 형식, 검증 기준을 다루는 구조가 달라 쌍으로 묶지 않는다 | ✅ | 2026-10-29 |
 | review-independently | 변환 | 범용 독립 검토 workflow는 동일. review 저장을 명시적으로 요청받았을 때의 agent prefix·metadata(`claude-review-`/`claude` ↔ `codex-review-`/`codex`)와 tool home 경로만 변환. 본문에 호출 표기가 없어 그 항목은 차이에 해당하지 않는다. 명시 호출 전용 정책은 Claude frontmatter ↔ Codex `agents/openai.yaml`로 변환 | ✅ | 2026-10-21 |
-| run-loop | 재작성 | 0~6 단계, in/auto 모드, 자연어 역할 설정, verifier 이름, 독립 리뷰와 재작업 한도를 맞췄다. Claude의 최근 개선 사항인 gates/·evidence/ 변경 감지와 스펙 재승인 시 R 초기화도 Codex에 반영했다. Claude Agent·claude-cli는 Codex의 fresh subagent·codex exec로, 호출 정책은 agents/openai.yaml로 변환한다. 질문 도구의 승인 제약, 모델 확인, CLI 샌드박스·JSONL, post.snap 재개 방식은 Codex 계약을 유지한다. 보조 스크립트 테스트와 수동 대조는 완료했으며, Codex 전체 루프의 종단 실행은 미검증이다 | ⏳ | 2026-11-12 |
+| run-loop | 재작성 | 0~6 단계, in/auto 모드, 자연어 역할 설정, verifier 이름, 독립 리뷰와 재작업 한도를 맞췄다. gates/·evidence/ 변경 감지와 스펙 재승인 시 R 초기화에 이어, 승인 대상 전문을 질문 전에 표시하고 미응답 상태로 재개하면 다시 제시하는 개선도 반영했다. Claude Agent·claude-cli는 Codex의 fresh subagent·codex exec로, 호출 정책은 agents/openai.yaml로 변환한다. 질문 도구의 승인 제약, 모델 확인, CLI 샌드박스·JSONL, post.snap 재개 방식은 Codex 계약을 유지한다. 질문 도구를 쓸 수 없으면 최종 응답에 승인 대상과 질문을 함께 싣는다. 보조 스크립트 테스트와 수동 대조는 완료했으며, Codex 전체 루프의 종단 실행은 미검증이다 | ⏳ | 2026-11-12 |
 
 ## Rules
 
@@ -105,6 +105,20 @@
 2026-07-23에는 `make-plan`·`read-review`·`write-review`의 명시 호출 전용 여부를 description 문구에 의존하지 않고 제품별 정책으로 강제했다. Claude는 `SKILL.md` frontmatter의 `disable-model-invocation: true`, Codex는 `agents/openai.yaml`의 `policy.allow_implicit_invocation: false`를 사용한다.
 
 ## 검증 이력
+
+### 2026-11-12 — 상태 표시줄의 잔여 사용 한도 표시를 도구별로 대조
+
+- **Claude 변경**: `cc0d50a`는 `home/statusline-command.sh`의 5시간·7일 사용 비율 표시를 남은 비율(`100 - used_percentage`)과 `left` 표기로 바꾼다. 정수 백분율로 반올림하고 0~100 범위로 제한한다.
+- **Codex 대응과 유지 사유**: `codex-config/home/config.toml`의 `[tui].status_line`에는 이미 내장 항목인 `five-hour-limit`와 `weekly-limit`가 있다. Claude가 직접 계산·출력하는 셸 스크립트와 구현 방식이 다르므로 해당 코드를 이식하지 않고 Codex 설정을 유지한다.
+- **검토 범위**: Claude 커밋의 diff와 Codex 대응 설정을 수동 대조했다. 실제 상태 표시줄 화면이나 두 도구의 반올림 결과가 같은지는 이번에 검증하지 않았다.
+
+### 2026-11-12 — run-loop 승인 대상 표시와 대기 중 재개를 Codex에 반영
+
+- **원본과 범위**: Claude의 `bb83280`에서 바뀐 `SKILL.md`와 `references/decision-package.md`를 Codex 사본에 반영했다. 앞선 `fccb7aa`의 동작 변경은 Codex `938f5f7`에 이미 반영되어 있어 유지했다. Claude 파일과 실행 스크립트는 수정하지 않았다.
+- **공통 동작**: 질문 전에 스펙의 모든 요구사항·검사 방법, 검토 결과와 컨텍스트 변경안을 항목별로 표시한다. 파일 경로나 ID 범위는 본문을 대신하지 않으며, 질문도 그 자체로 무엇을 판단하는지 알 수 있게 쓴다. `state.md`에 대기 중인 결정과 답변을 기록하고, 미응답 상태로 재개하면 단계 파일에서 판단 자료를 복원하여 다시 보여 준다.
+- **Codex 변환 사유**: Claude의 `AskUserQuestion` 호출을 그대로 옮기지 않고, 실제 질문 도구가 해당 종류의 질문을 허용할 때만 사용한다. 도구를 쓸 수 없으면 최종 응답에 판단 자료와 질문을 함께 실어 이전 진행 메시지가 접혀도 내용을 확인할 수 있게 한다. 재개 전에 이미 받은 명시적 답변을 대조하여 유효한 승인을 다시 요구하지 않는다. 기존 `post.snap` 무결성 확인과 명시 호출 정책은 유지한다.
+- **검증 결과**: Claude 변경분과 수동 대조를 마쳤으며, `quick_validate.py`, 기존 보조 스크립트 테스트 12개, 로컬 Markdown 참조 14개, `check-sync-status`, `git diff --check`를 통과했다. 질문 화면과 전체 루프의 실제 실행은 검증하지 않았다.
+- **홈 적용과 커밋**: `codex-diff-with-home`은 이전 미적용분을 포함해 run-loop 파일 7개와 inspect-session 파일 1개의 차이를 보고했다. 이번 수정은 run-loop 문서 2개이며, 실제 홈 적용과 커밋은 하지 않았다.
 
 ### 2026-11-12 — run-loop의 Claude 개선 사항을 Codex에 반영
 
