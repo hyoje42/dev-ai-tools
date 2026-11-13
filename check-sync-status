@@ -10,8 +10,9 @@
 # is checked on that side alone. Any semantic drift, untracked skill, missing
 # pair, unexpected status, missing policy, or missing documentation row is a
 # validation failure.
-# Rewritten pairs have independent implementations; validate their required files and
-# policies here, then check behavior with each tool's tests and manual review.
+# Rewritten pairs have independent implementations; validate their required files,
+# policies, and designated shared code here, then check behavior with each tool's
+# tests and manual review.
 
 set -euo pipefail
 
@@ -22,7 +23,7 @@ SYNC_DOC="$ROOT/docs/skill-sync-status.md"
 
 EXPECTED_IDENTICAL="git-commit-message"
 EXPECTED_DIFFERS="handoff load-handoff make-plan review-independently review-pr"
-EXPECTED_REWRITTEN="inspect-session run-loop"
+EXPECTED_REWRITTEN="inspect-session run-loop session-dashboard"
 EXPECTED_CLAUDE_ONLY="draft-prompt"
 EXPECTED_CODEX_ONLY="prompt-redrafter"
 EXPLICIT_ONLY="draft-prompt handoff load-handoff make-plan review-independently run-loop"
@@ -84,12 +85,16 @@ compare() {
 }
 
 validate_rewritten_pairs() {
-    local name side dir rel required
+    local name side dir rel required shared
     printf '\n== 도구별로 재작성한 skill ==\n'
     for name in $EXPECTED_REWRITTEN; do
+        shared=""
         case "$name" in
             inspect-session) required="SKILL.md scripts/session_digest.py" ;;
             run-loop) required="SKILL.md references/defaults.md references/context-template.md references/decision-package.md references/prompts.md references/runners.md scripts/tree_snapshot.sh scripts/pane-filter.jq" ;;
+            session-dashboard)
+                required="SKILL.md scripts/dashboard.py scripts/source.py assets/index.html assets/dashboard.css assets/dashboard.js references/usage.md"
+                shared="scripts/dashboard.py assets/index.html assets/dashboard.css assets/dashboard.js" ;;
             *)
                 printf '오류: skills/%s의 필수 파일 목록이 없습니다.\n' "$name" >&2
                 failures=$((failures + 1))
@@ -103,6 +108,14 @@ validate_rewritten_pairs() {
                     failures=$((failures + 1))
                 fi
             done
+        done
+        for rel in $shared; do
+            if ! cmp -s "$CLAUDE_SKILLS/$name/$rel" "$CODEX_SKILLS/$name/$rel"; then
+                printf '오류: skills/%s/%s 공통 파일이 두 도구에서 byte 단위로 다릅니다.\n' "$name" "$rel" >&2
+                failures=$((failures + 1))
+            else
+                printf '공통 파일 동일: skills/%s/%s\n' "$name" "$rel"
+            fi
         done
         printf '수동 대조 필요: skills/%s 항목은 도구별 구현이 다릅니다. 변환 사유는 docs/skill-sync-status.md를 확인하세요.\n' "$name"
     done

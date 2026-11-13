@@ -4,7 +4,7 @@
 
 **기계 검증**: repo 루트의 `./check-sync-status`가 모든 skill 쌍을 비교한다(rule은 2026-06-23 통합으로 비교 대상에서 제외 — 아래 'Rules' 참고). IDENTICAL 항목은 byte 단위 동일성을, DIFFERS 항목은 self/other 도구 명칭·작성자 prefix·홈 경로·호출 문법을 정규화한 뒤 non-policy 파일의 semantic 동일성을 검증한다. Claude frontmatter와 Codex `agents/openai.yaml`의 명시 호출 전용 정책은 별도로 확인하며, 단독 skill은 존재하는 쪽만 확인한다. 단독 목록(`EXPECTED_CLAUDE_ONLY`·`EXPECTED_CODEX_ONLY`)에 없는데 한쪽에만 존재하는 skill, 아래 표에 등록되지 않은 skill, 예상 상태 불일치, 정규화 후 semantic drift, 명시 호출 정책 누락이 있으면 실패한다. 이 문서는 **DIFFERS 항목의 변환 사유 기록**에 집중한다.
 
-`EXPECTED_REWRITTEN`에 등록한 재작성 쌍은 정규화 비교 대신 스킬별로 지정한 양쪽 필수 파일을 검사하고, `EXPLICIT_ONLY`에 있으면 호출 정책도 검사한다. 동작의 동등성은 이 검사만으로 보장하지 않으며, 도구별 테스트와 수동 대조 결과를 검증 이력에 기록한다.
+`EXPECTED_REWRITTEN`에 등록한 재작성 쌍은 정규화 비교 대신 스킬별로 지정한 양쪽 필수 파일을 검사하고, `EXPLICIT_ONLY`에 있으면 호출 정책도 검사한다. 공통 코드를 지정한 쌍은 해당 파일의 byte 동일성도 검사한다. 현재 `session-dashboard`의 `scripts/dashboard.py`와 `assets/index.html`·`dashboard.css`·`dashboard.js`가 대상이며, 도구별 어댑터와 문서는 서로 달라도 된다. 동작의 동등성은 이 검사만으로 보장하지 않으며, 도구별 테스트와 수동 대조 결과를 검증 이력에 기록한다.
 
 새로 점검하거나 항목이 바뀌면 이 표와 "검증 이력"을 갱신한다.
 
@@ -43,6 +43,7 @@
 | prompt-redrafter | 단독 (Codex) | OpenAI [ChatGPT Enterprise Prompting Guide](https://github.com/openai/openai-cookbook/blob/main/examples/chatgpt/chatgpt_prompt_guide/chatgpt_prompt_guide.md)가 배포하는 [zip](https://cdn.openai.com/cookbook/chatgpt-prompt-guide/prompt-redrafter.zip)의 `SKILL.md`와 byte 단위로 같은 사본이다. 원본 갱신을 그대로 따라가려고 수정하지 않으며, `agents/openai.yaml`도 두지 않아 암묵 호출이 가능하다. draft-prompt와 목적은 비슷하지만 모드 구분, 받는 쪽에 맞춘 형식, 검증 기준을 다루는 구조가 달라 쌍으로 묶지 않는다 | ✅ | 2026-10-29 |
 | review-independently | 변환 | 범용 독립 검토 workflow는 동일. review 저장을 명시적으로 요청받았을 때의 agent prefix·metadata(`claude-review-`/`claude` ↔ `codex-review-`/`codex`)와 tool home 경로만 변환. 본문에 호출 표기가 없어 그 항목은 차이에 해당하지 않는다. 명시 호출 전용 정책은 Claude frontmatter ↔ Codex `agents/openai.yaml`로 변환 | ✅ | 2026-10-21 |
 | run-loop | 재작성 | 0~6 단계, in/auto 모드, 자연어 역할 설정, verifier 이름, 독립 리뷰와 재작업 한도를 맞췄다. gates/·evidence/ 변경 감지와 스펙 재승인 시 R 초기화에 이어, 승인 대상 전문을 질문 전에 표시하고 미응답 상태로 재개하면 다시 제시하는 개선도 반영했다. Claude Agent·claude-cli는 Codex의 fresh subagent·codex exec로, 호출 정책은 agents/openai.yaml로 변환한다. 질문 도구의 승인 제약, 모델 확인, CLI 샌드박스·JSONL, post.snap 재개 방식은 Codex 계약을 유지한다. 질문 도구를 쓸 수 없으면 최종 응답에 승인 대상과 질문을 함께 싣는다. 보조 스크립트 테스트와 수동 대조는 완료했으며, Codex 전체 루프의 종단 실행은 미검증이다 | ⏳ | 2026-11-12 |
+| session-dashboard | 재작성 | 서버와 UI 파일 4개는 byte 동일하게 유지하고, 각 도구의 inspect-session 파서를 사용하는 source.py와 사용 지침은 별도로 변환했다. Codex는 rollout·session_index와 CODEX_THREAD_ID를, Claude는 projects 기록·이름/상태 레지스트리와 SKILL.md의 세션 ID 치환을 사용한다. 실제 실행 여부는 모두 미확인으로 표시하며, 발급된 근거에 연결한 한국어 요약과 localhost·오프라인 HTML을 제공한다. 양쪽 모두 자동·명시 호출을 허용한다. 수집 경합 수정과 도구별 변환을 마쳤으며, 자동 테스트 129개·실제 프로세스 검증 20개 묶음과 스킬 쌍 검사를 통과했다. 최종 독립 검증에서도 S1~S10을 모두 통과했다 | ✅ | 2026-11-13 |
 
 ## Rules
 
@@ -105,6 +106,20 @@
 2026-07-23에는 `make-plan`·`read-review`·`write-review`의 명시 호출 전용 여부를 description 문구에 의존하지 않고 제품별 정책으로 강제했다. Claude는 `SKILL.md` frontmatter의 `disable-model-invocation: true`, Codex는 `agents/openai.yaml`의 `policy.allow_implicit_invocation: false`를 사용한다.
 
 ## 검증 이력
+
+### 2026-11-13 — session-dashboard 수집 경합 수정과 Claude 변환 재개 완료
+
+- **구현 순서**: 2026-11-12 초기 구현 이후 남은 수집 경합 수정을 2026-11-13에 재개했다. Codex의 수정과 독립 검증을 먼저 마친 뒤 공통 서버를 Claude에 동일하게 반영하고, 원시 바이트·압축 해제 결과의 해시 증거와 오류 관찰 전달을 Claude 어댑터에 변환해 적용했다.
+- **변환 사유**: Codex는 `CODEX_HOME` 또는 `~/.codex`의 sessions/archived_sessions rollout(JSONL·gzip)과 `session_index.jsonl` 제목을 사용하며, 설치된 스킬 경로는 `~/.agents/skills`다. Claude는 `CLAUDE_CONFIG_DIR` 또는 `~/.claude`의 `projects` 기록과 크기를 제한해 읽은 `sessions/*.json`의 이름·상태를 사용하며, 스킬 경로는 `~/.claude/skills`다. 각 `scripts/source.py`는 같은 도구의 형제 `inspect-session` 파서에 읽기 전용 임시 스냅샷을 전달한다.
+- **자기 세션과 실행 상태**: Codex는 `CODEX_THREAD_ID`를 `--self`로 넘긴다. Claude는 `SKILL.md`의 `${CLAUDE_SESSION_ID}` 치환 결과를 리터럴로 넘기며, 같은 이름의 셸 환경 변수로 대체하지 않는다. 두 도구 모두 실제 실행 여부를 미확인으로 표시한다. Claude 레지스트리 상태는 읽은 시각과 원본 수정 시각이 붙은 관측값이며, PID가 존재해도 현재 실행 중이라고 판정하지 않는다.
+- **공통 동작과 호출 정책**: 호출한 에이전트가 발급 시점에 고정된 근거를 읽고 한국어 요약을 직접 작성한 뒤 가져온다. 요약의 근거는 이후 기록과 분리해 보존하며, 브라우저 새로고침은 기록만 갱신한다. localhost 서버와 단일 오프라인 HTML을 지원한다. Codex에만 UI 메타데이터용 `agents/openai.yaml`이 있고 암묵 호출을 막는 정책은 없다. Claude도 자동 호출을 허용하며, 양쪽 모두 명시 호출을 지원한다. `EXPLICIT_ONLY`에는 추가하지 않았다.
+- **수집 경합과 변환 범위**: 같은 런타임에서는 체크포인트 조회부터 읽기·관찰 저장까지 `collection.lock`으로 직렬화하고, 서로 다른 런타임은 독립적으로 진행한다. 오래된 관찰은 최신 이력을 덮어쓰지 않는다. Claude의 UUID 부모 연결·분기 이력·레지스트리 이름 갱신을 유지했으며, 정상 재압축과 미완성 gzip 꼬리를 원본 교체로 오판하지 않도록 검증했다.
+- **부모 검사**: `EXPECTED_REWRITTEN`에 등록하고 양쪽의 `SKILL.md`, `scripts/dashboard.py`, `scripts/source.py`, `assets/index.html`, `assets/dashboard.css`, `assets/dashboard.js`, `references/usage.md`가 존재하고 비어 있지 않은지 검사한다. 공통 서버인 `scripts/dashboard.py`와 UI 파일 3개는 byte 동일성을 추가로 강제한다. 어댑터·문서·Codex 전용 메타데이터는 의도된 차이로 유지하며, 기존 쌍·정규화·명시 호출 정책 검사는 보존했다.
+- **자동 검증**: Codex 핵심·서버 38개·UI 12개·파서 18개, Claude 핵심·서버 43개·UI 12개·파서 6개로 총 129개를 통과했다. 승인된 요약과 대기 입력은 확인된 축소·삭제·교체·되돌리기 이후 원본을 복원하거나 프로세스를 재시작해도 계속 무효이며, 발급 당시 근거는 보존됨을 확인했다. 65개·200개 입력의 원자적 발급, 서로 다른 원본 512개의 스냅샷 용량과 무효화 이력 보존, 변경 없는 기록의 추가 읽기·파싱 방지도 검증했다.
+- **독립 검증**: Codex의 S5·S7·S8·S9 집중 검증과 도구별 실제 프로세스 경합 10개씩 총 20개 시나리오 묶음을 통과했다. 잠금을 제거한 변형은 실패하여 경합 검사의 탐지력도 확인했다. 새 검증자의 최종 전체 검증에서도 S1~S10을 모두 통과했으며, 완료를 막는 지적 사항은 없었다. 다른 모델 계열에 의한 검증은 보장하지 않는다. 이 검증 결과는 사용자의 최종 승인이나 홈 적용 승인을 뜻하지 않는다.
+- **이전 브라우저 검증**: 2026-11-12에는 온라인·오프라인 브라우저에서 320~390px 화면, 키보드 조작, 근거 조회, 오래된 요약 표시, 주입 내용 처리를 확인했다. 이번 재개에서는 UI 자산을 변경하지 않았으며, 해당 결과는 이전 검증 이력으로 유지한다.
+- **부모 검사 검증**: `./check-sync-status`, 공통 파일 드리프트 게이트, JavaScript 구문 검사, 스킬 validator와 diff 검사를 통과했다. 공통 서버·UI 파일 4개의 byte 동일성과 도구별 어댑터의 의도된 차이를 확인했다.
+- **최신 홈 차이와 적용 여부**: 현재 두 도구의 홈에는 이전 버전의 스킬 사본이 존재한다. 설치 경위와 시점은 확인되지 않았으며, 이번 재개 작업에서 설치하거나 동기화한 것은 아니다. 최신 `codex-diff-with-home`은 `scripts/dashboard.py` 수정 1개를, `claude-diff-with-home`은 `scripts/dashboard.py`와 `scripts/source.py` 수정 2개를 보고했다. 이번 작업에서는 홈 동기화·커밋·push를 수행하지 않았다.
 
 ### 2026-11-12 — 상태 표시줄의 잔여 사용 한도 표시를 도구별로 대조
 
