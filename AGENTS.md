@@ -22,6 +22,7 @@ Once the work target is decided, read the matching doc first and follow its guid
 | Inside `claude-config/` | [claude-config/AGENTS.md](./claude-config/AGENTS.md) |
 | Inside `codex-config/` | [codex-config/AGENTS.md](./codex-config/AGENTS.md) |
 | Root level (submodule bumps, README, etc.) | This doc + [README.md](./README.md) |
+| Re-checking rules, output styles, and skills for a new model or harness release | [docs/model-refresh-checklist.md](./docs/model-refresh-checklist.md) |
 
 > A submodule's AGENTS.md (= `CLAUDE.md`) is auto-loaded when you enter that subtree. Each submodule's detailed structure and usage lives in that repo's README.md.
 
